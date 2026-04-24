@@ -13,7 +13,7 @@ internal static class PageRoute
     public const string NewSocioPage = Prefix + "new_socios";
 
     public const string ProductosPage = Prefix + "productos";
-    public const string NewProductoPage = Prefix + "productos/nuevo";
+    public const string NewProductoPage = Prefix + "new_producto";
     public const string EditProductoPage = Prefix + "productos/editar"; // ID added manually on routing
 
 }

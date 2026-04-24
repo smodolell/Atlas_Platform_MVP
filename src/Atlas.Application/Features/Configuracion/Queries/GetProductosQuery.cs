@@ -40,6 +40,8 @@ public class GetProductosQuery : IQuery<Result<PagedResultDto<ProductoListItemDt
 
     public bool SortDescending { get; set; }
     public string? SearchText { get; set; }
+
+    public int? PeriodicidadId { get; set; }
 }
 
 internal class GetProductosQueryHandler(
@@ -56,7 +58,7 @@ internal class GetProductosQueryHandler(
     {
         try
         {
-            var spec = new ProductosSpec(request.SearchText);
+            var spec = new ProductosSpec(request.SearchText,request.PeriodicidadId);
             var query = _context.Productos.WithSpecification(spec);
             var sortedQuery = _sorter.ApplySort(query, request.SortColumn, request.SortDescending);
             var result = await _paginator.PaginateAsync<Producto, ProductoListItemDto>(sortedQuery, request.Page, request.PageSize, cancellationToken);

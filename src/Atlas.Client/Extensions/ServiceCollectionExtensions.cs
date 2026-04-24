@@ -1,5 +1,4 @@
 ﻿using Atlas.Client.Auth;
-using Atlas.Client.Clients;
 using Atlas.Client.Handlers;
 using Atlas.Client.Initializers;
 using Atlas.Client.Interfaces;
@@ -34,7 +33,12 @@ public static class ServiceCollectionExtensions
         AddAtlasRefitClient<IAccountsApi>(services, apiBaseAddress);
         AddAtlasRefitClient<ISociosApi>(services, apiBaseAddress);
         AddAtlasRefitClient<IConfiguracionApi>(services, apiBaseAddress);
+        AddAtlasRefitClient<ISelectListsApi>(services, apiBaseAddress);
 
+
+
+
+        services.AddScoped<IAppInitializer, NavigationSyncInitializer>();
         return services;
     }
 

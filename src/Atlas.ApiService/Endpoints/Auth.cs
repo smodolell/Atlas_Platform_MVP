@@ -1,11 +1,8 @@
 using Atlas.ApiService.Infrastructure;
-using Atlas.Application.Common.DTOs;
+using Atlas.Shared.Common;
 using Atlas.Application.Features.Auth.Commands;
 using Atlas.Application.Features.Auth.DTOs;
 using Atlas.Application.Features.Auth.Queries;
-using LiteBus.Commands.Abstractions;
-using LiteBus.Queries.Abstractions;
-using Microsoft.AspNetCore.Mvc;
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
 namespace Atlas.ApiService.Endpoints;

@@ -1,5 +1,5 @@
 using Atlas.ApiService.Infrastructure;
-using Atlas.Application.Common.DTOs;
+using Atlas.Shared.Common;
 using Atlas.Application.Features.Socios.Commands;
 using Atlas.Application.Features.Socios.Queries;
 using Atlas.Shared.Socios;

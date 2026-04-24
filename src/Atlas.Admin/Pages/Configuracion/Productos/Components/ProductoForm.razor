@@ -1,4 +1,5 @@
 @using Atlas.Shared.Configuracion
+@inject ISelectListsApi _selectListsApi;
 
 <EditForm EditContext="_editContext" OnValidSubmit="HandleSubmit" autocomplete="off">
     <FluentValidator />
@@ -8,6 +9,7 @@
                           @bind-Value="Model.NomProducto"
                           For="@(() => Model.NomProducto)"
                           Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
                           Class="mb-4" />
         </MudItem>
         <MudItem xs="12" sm="6">
@@ -15,13 +17,27 @@
                           @bind-Value="Model.Descripcion"
                           For="@(() => Model.Descripcion)"
                           Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
                           Class="mb-4" />
+        </MudItem>
+        <MudItem xs="12" sm="12" md="6">
+            <MudSelect T="int" Label="Periodicidad" @bind-Value="Model.PeriodicidadId" Variant="Variant.Outlined" Margin="Margin.Dense">
+                <MudSelectItem T="int" Value="0">[Seleccione]</MudSelectItem>
+                @if (_listPeriodicidad != null)
+                {
+                    @foreach (var item in _listPeriodicidad)
+                    {
+                        <MudSelectItem T="int" Value="@Convert.ToInt32(item.Value)">@item.Text</MudSelectItem>
+                    }
+                }
+            </MudSelect>
         </MudItem>
         <MudItem xs="12" sm="6">
             <MudNumericField Label="Precio"
                              @bind-Value="Model.Precio"
                              For="@(() => Model.Precio)"
                              Variant="Variant.Outlined"
+                             Margin="Margin.Dense"
                              Format="C2"
                              Step="0.01M"
                              Class="mb-4" />
@@ -31,6 +47,7 @@
                              @bind-Value="Model.CupoMaximo"
                              For="@(() => Model.CupoMaximo)"
                              Variant="Variant.Outlined"
+                             Margin="Margin.Dense"
                              Step="1"
                              Class="mb-4" />
         </MudItem>
@@ -70,12 +87,19 @@
 
     private EditContext? _editContext;
     private ValidationMessageStore? _messageStore;
+    private List<SelectListItemDto>? _listPeriodicidad;
 
-    protected override void OnInitialized()
+
+    protected override async Task OnInitializedAsync()
     {
         _editContext = new EditContext(Model);
         _messageStore = new ValidationMessageStore(_editContext);
         _editContext.OnFieldChanged += (s, e) => _messageStore.Clear(e.FieldIdentifier);
+
+        if (_listPeriodicidad== null)
+        {
+            _listPeriodicidad = (await _selectListsApi.GetPeriodicidadSelectListAsync()).Data!;
+        }
     }
     
     protected override void OnParametersSet()

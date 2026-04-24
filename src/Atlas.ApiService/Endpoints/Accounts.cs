@@ -1,5 +1,5 @@
 ﻿using Atlas.ApiService.Infrastructure;
-using Atlas.Application.Common.DTOs;
+using Atlas.Shared.Common;
 using Atlas.Application.Features.Accounts.Roles.Commands;
 using Atlas.Application.Features.Accounts.Roles.Queries;
 using Atlas.Application.Features.Accounts.Usuarios.Commands;

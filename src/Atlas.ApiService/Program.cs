@@ -2,7 +2,7 @@ using Atlas.ApiService;
 using Atlas.ApiService.Handlers;
 using Atlas.ApiService.Infrastructure;
 using Atlas.Application;
-using Atlas.Application.Common.DTOs;
+using Atlas.Shared.Common;
 using Atlas.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;

@@ -1,5 +1,5 @@
 ﻿using Atlas.ApiService.Infrastructure;
-using Atlas.Application.Common.DTOs;
+using Atlas.Shared.Common;
 using Atlas.Application.Features.Navegation.Commands;
 using Atlas.Application.Features.Navegation.Queries;
 using Atlas.Shared.Navegation;

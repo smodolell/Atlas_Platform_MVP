@@ -16,6 +16,7 @@ internal class CreateProductoCommandHandler(IAtlasDbContext context, IValidator<
             return Result.Invalid(validationResult.AsErrors());
         var producto = new Producto
         {
+            PeriodicidadId = model.PeriodicidadId,
             NomProducto = model.NomProducto,
             Descripcion = model.Descripcion,
             Precio = model.Precio,

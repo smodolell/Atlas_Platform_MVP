@@ -19,6 +19,7 @@ internal class NavigationSyncInitializer(INavigationApi layoutApi ,AppSettingDto
 
         if (assembly == null) return;
 
+       
         var pages = Utils.GetPagesFromAssembly(assembly);
 
         var application = new ApplicationDto

@@ -1,4 +1,4 @@
-﻿using Atlas.Application.Common.DTOs;
+﻿using Atlas.Shared.Common;
 using Microsoft.AspNetCore.Diagnostics;
 using System.Diagnostics;
 

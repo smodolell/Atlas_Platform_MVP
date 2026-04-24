@@ -34,7 +34,7 @@ public class UpdateProductoCommandHandler(
 
         if (existeProductoConMismoNombre)
             return Result.Invalid(new ValidationError($"Ya existe un producto con el nombre {model.NomProducto}"));
-
+        producto.PeriodicidadId = model.PeriodicidadId;
         producto.NomProducto = model.NomProducto;
         producto.Descripcion = model.Descripcion;
         producto.Precio = model.Precio;

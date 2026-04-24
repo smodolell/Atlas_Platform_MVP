@@ -1,6 +1,4 @@
-﻿using Ardalis.Result;
-using Atlas.Application.Common.DTOs;
-using Microsoft.AspNetCore.Http;
+﻿using Atlas.Shared.Common;
 using System.Diagnostics;
 using IResult = Microsoft.AspNetCore.Http.IResult;
 

@@ -1,13 +1,14 @@
 @attribute [Route(PageRoute.NewProductoPage)]
 @attribute [AccessPoint(AppMenu.MenuConfiguracion, "Nuevo Producto")]
 @using Atlas.Shared.Configuracion
-@using Atlas.Client.Clients
+@using Atlas.Client.Services
 @using Atlas.Admin.Pages.Configuracion.Productos.Components
 @inject IConfiguracionApi _configuracionApi
-@inject ISnackbar _snackbarService
-@inject NavigationManager _navigationManager
 
-<PageHeader Title="Nuevo Producto" Icon="@Icons.Material.Filled.AddBox" BackRoute="@PageRoute.ProductosPage"></PageHeader>
+
+<PageHeader Title="Nuevo Producto" Icon="@Icons.Material.Filled.AddBox" >
+    <MudBreadcrumbs Items="_breadcrumbItems"></MudBreadcrumbs>
+</PageHeader>
 
 <MudPaper Elevation="2" Class="pa-4 mt-4">
     <ProductoForm Model="_model"
@@ -17,9 +18,15 @@
 </MudPaper>
 
 @code {
+
     private ProductoEditDto _model = new();
     private bool _isSaving;
-
+    private readonly List<BreadcrumbItem> _breadcrumbItems = new()
+{
+        new BreadcrumbItem("Inicio", href: "/"),
+        new BreadcrumbItem("Productos", href: PageRoute.ProductosPage),
+        new BreadcrumbItem("Nuevo Producto", href: null, disabled: true)
+    };
     private async Task HandleSave(ProductoEditDto model)
     {
         _isSaving = true;
@@ -29,7 +36,7 @@
             if (response.IsSuccessStatusCode)
             {
                 _snackbarService.Add("Producto creado correctamente", Severity.Success);
-                _navigationManager.NavigateTo(PageRoute.ProductosPage);
+                _navManager.NavigateTo(PageRoute.ProductosPage);
             }
             else
             {
@@ -48,6 +55,6 @@
 
     private void GoBack()
     {
-        _navigationManager.NavigateTo(PageRoute.ProductosPage);
+        _navManager.NavigateTo(PageRoute.ProductosPage);
     }
 }

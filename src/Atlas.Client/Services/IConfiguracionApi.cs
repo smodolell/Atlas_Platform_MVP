@@ -2,7 +2,7 @@
 using Atlas.Shared.Configuracion;
 using Refit;
 
-namespace Atlas.Client.Clients;
+namespace Atlas.Client.Services;
 
 public interface IConfiguracionApi
 {
@@ -12,12 +12,13 @@ public interface IConfiguracionApi
         CancellationToken cancellationToken = default);
 
     [Get("/api/configuracion/producto/")]
-    Task<IApiResponse<ApiResponseDto<PagedResultDto<ProductoListItemDto>>>> GetProductosAsync(
+    Task<ApiResponseDto<PagedResultDto<ProductoListItemDto>>> GetProductosAsync(
         [Query] string? q = null,
         [Query] int page = 1,
         [Query] int size = 10,
         [Query] string sortColumn = "NomProducto",
         [Query] bool sortDescending = false,
+        [Query] int? periodicidadId = null ,
         CancellationToken cancellationToken = default);
 
     [Post("/api/configuracion/producto/")]

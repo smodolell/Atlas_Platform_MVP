@@ -10,7 +10,7 @@ global using Microsoft.EntityFrameworkCore;
 global using LinqKit;
 global using System.Linq.Expressions;
 global using Atlas.Domain.Entities;
-global using Atlas.Application.Common.DTOs;
+global using Atlas.Shared.Common;
 global using Atlas.Application.Common.Interfaces;
 
 

@@ -1,7 +1,7 @@
 ﻿using Atlas.ApiService.Infrastructure;
-using Atlas.Application.Common.DTOs;
 using Atlas.Application.Features.Configuracion.Commands;
 using Atlas.Application.Features.Configuracion.Queries;
+using Atlas.Shared.Common;
 using Atlas.Shared.Configuracion;
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
@@ -14,7 +14,7 @@ public class Configuracion : EndpointGroupBase
     public override void Map(RouteGroupBuilder groupBuilder)
     {
         var group = groupBuilder.MapGroup("/")
-          .WithTags("Productos");
+          .WithTags("Configuración");
 
         group.MapGet("producto/{id}", GetProductoById)
             .WithName("GetProductoById")
@@ -72,7 +72,9 @@ public class Configuracion : EndpointGroupBase
         [FromQuery] int page = 1,
         [FromQuery] int size = 10,
         [FromQuery] string sortColumn = nameof(ProductoListItemDto.NomProducto),
-        [FromQuery] bool sortDescending = false)
+        [FromQuery] bool sortDescending = false,
+        [FromQuery] int? periodicidadId = null
+        )
     {
         var result = await queryMediator.QueryAsync(new GetProductosQuery
         {
@@ -80,7 +82,8 @@ public class Configuracion : EndpointGroupBase
             Page = page,
             PageSize = size,
             SortColumn = sortColumn,
-            SortDescending = sortDescending
+            SortDescending = sortDescending,
+            PeriodicidadId = periodicidadId
         });
         return result.ToCustomMinimalApiResult();
     }

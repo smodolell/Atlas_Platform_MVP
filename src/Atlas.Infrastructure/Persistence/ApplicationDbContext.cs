@@ -20,6 +20,8 @@ public class ApplicationDbContext : IdentityDbContext<Usuario, Rol, int>, IAtlas
 
     public DbSet<Menu> SYS_Menu =>  Set<Menu>();
 
+    public DbSet<Periodicidad> Periodicidades => Set<Periodicidad>();
+
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
     {
     }

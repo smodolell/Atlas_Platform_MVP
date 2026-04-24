@@ -3,6 +3,7 @@
 public class ProductoEditDto
 {
     public int ProductoId { get; set; }
+    public int PeriodicidadId { get; set; }
     public string NomProducto { get; set; } = string.Empty;
     public string Descripcion { get; set; } = string.Empty;
     public decimal Precio { get; set; }

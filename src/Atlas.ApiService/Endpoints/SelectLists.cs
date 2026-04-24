@@ -1,0 +1,48 @@
+﻿using Atlas.ApiService.Infrastructure;
+using Atlas.Application.Features.SelectLists.Queries;
+using Atlas.Shared.Common;
+using IResult = Microsoft.AspNetCore.Http.IResult;
+
+namespace Atlas.ApiService.Endpoints;
+
+public class SelectLists : EndpointGroupBase
+{
+    public override string? GroupName => "select-lists";
+    public override void Map(RouteGroupBuilder groupBuilder)
+    {
+        var group = groupBuilder.MapGroup("/")
+            .WithTags("Select Lists");
+
+        group.MapGet("periodicidades", GetPeriodicidadSelectList)
+            .WithName("GetPeriodicidadSelectList")
+            .WithSummary("Obtiene Periodicidades")
+            .WithDescription("Retorna una lista de los Periodicidades")
+            .Produces<ApiResponseDto<List<SelectListItemDto>>>(StatusCodes.Status200OK)
+            .Produces<ApiResponseDto>(StatusCodes.Status400BadRequest)
+            .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
+            .Produces<ApiResponseDto>(StatusCodes.Status404NotFound)
+            .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
+
+
+    }
+
+
+    public async Task<IResult> GetPeriodicidadSelectList(
+      [FromServices] IQueryMediator queryMediator,
+      [FromQuery] string? searchTerm = null,
+      [FromQuery] int? maxResults = null,
+      CancellationToken cancellationToken = default)
+    {
+        var query = new GetPeriodicidadSelectListQuery
+        {
+            SearchTerm = searchTerm,
+            MaxResults = maxResults
+        };
+
+        var result = await queryMediator.QueryAsync(query, cancellationToken);
+
+        return Result.Success(result.Value).ToCustomMinimalApiResult();
+    }
+
+  
+}

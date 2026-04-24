@@ -6,6 +6,7 @@ public interface IAtlasDbContext
 {
     DbSet<Socio> Socios { get; }
     DbSet<Producto> Productos { get; }
+    DbSet<Periodicidad> Periodicidades { get; }
     DbSet<Domain.Entities.Application> SYS_Application { get; }
     DbSet<AccessPoint> SYS_AccessPoint { get; }
     DbSet<RolAccessPoint> SYS_RolAccessPoint { get; }

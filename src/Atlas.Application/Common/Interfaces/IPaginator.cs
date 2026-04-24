@@ -1,6 +1,4 @@
-﻿using Atlas.Application.Common.DTOs;
-
-namespace Atlas.Application.Common.Interfaces;
+﻿namespace Atlas.Application.Common.Interfaces;
 
 public interface IPaginator
 {

@@ -1,5 +1,5 @@
-﻿using Atlas.Application.Common.DTOs;
-using Atlas.Application.Common.Interfaces;
+﻿using Atlas.Application.Common.Interfaces;
+using Atlas.Shared.Common;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 

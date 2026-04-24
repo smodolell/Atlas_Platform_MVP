@@ -11,13 +11,13 @@ public partial class EmptyLayout
         await base.OnInitializedAsync();
     }
 
-    //protected override async Task OnAfterRenderAsync(bool firstRender)
-    //{
-    //    await base.OnAfterRenderAsync(firstRender);
-    //    if (firstRender)
-    //    {
-    //        _appState.OnChange += StateHasChanged;
-    //        await _appState.InitializeAsync();
-    //    }
-    //}
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+        if (firstRender)
+        {
+            _appState.OnChange += StateHasChanged;
+            await _appState.InitializeAsync();
+        }
+    }
 }
