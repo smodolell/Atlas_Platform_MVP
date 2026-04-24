@@ -1,0 +1,175 @@
+﻿@using Atlas.Shared.Accounts.Usuarios
+@inject IAccountsApi _accountsApi
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@(_isEdit? Icons.Material.Filled.Edit : Icons.Material.Filled.PersonAdd)" Class="mr-2" />
+            @(_isEdit ? "Editar Usuario" : "Nuevo Usuario")
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (_isEdit)
+        {
+            <EditForm EditContext="_editContext" OnValidSubmit="HandleSubmit" autocomplete="off">
+                <FluentValidator />
+                <MudTextField Label="Nombre Completo"
+                              @bind-Value="_editModel.NombreCompleto"
+                              For="@(() => _editModel.NombreCompleto)"
+                              Variant="Variant.Outlined"
+                              Class="mb-4" />
+                <MudTextField Label="Email"
+                              @bind-Value="_editModel.Email"
+                              For="@(() => _editModel.Email)"
+                              Variant="Variant.Outlined"
+                              InputType="InputType.Email"
+                              Class="mb-4" />
+                <MudTextField Label="Teléfono"
+                              @bind-Value="_editModel.Telefono"
+                              For="@(() => _editModel.Telefono)"
+                              Variant="Variant.Outlined"
+                              Class="mb-2" />
+                <button type="submit" id="submit-form" hidden></button>
+            </EditForm>
+        }
+        else
+        {
+            <EditForm EditContext="_editContext" OnValidSubmit="HandleSubmit">
+                <FluentValidator />
+                <ValidationSummary />
+                <MudTextField Label="Nombre de Usuario"
+                              @bind-Value="_createModel.UserName"
+                              For="@(() => _createModel.UserName)"
+                              Variant="Variant.Outlined"
+                              Class="mb-4"
+                              UserAttributes="InputAttributes" />
+                <MudTextField Label="Nombre Completo"
+                              @bind-Value="_createModel.NombreCompleto"
+                              For="@(() => _createModel.NombreCompleto)"
+                              Variant="Variant.Outlined"
+                              Class="mb-4" />
+                <MudTextField Label="Email"
+                              @bind-Value="_createModel.Email"
+                              For="@(() => _createModel.Email)"
+                              Variant="Variant.Outlined"
+                              InputType="InputType.Email"
+                              Class="mb-4" />
+                <MudTextField Label="Teléfono"
+                              @bind-Value="_createModel.Telefono"
+                              For="@(() => _createModel.Telefono)"
+                              Variant="Variant.Outlined"
+                              Class="mb-4" />
+                <MudTextField Label="Contraseña"
+                              @bind-Value="_createModel.Password"
+                              For="@(() => _createModel.Password)"
+                              Variant="Variant.Outlined"
+                              InputType="InputType.Password"
+                              Class="mb-4"
+                              UserAttributes="InputAttributes" />
+                <MudTextField Label="Confirmar Contraseña"
+                              @bind-Value="_createModel.ConfirmPassword"
+                              For="@(() => _createModel.ConfirmPassword)"
+                              Variant="Variant.Outlined"
+                              InputType="InputType.Password"
+                              Class="mb-2" 
+                              UserAttributes="InputAttributes" />
+                <button type="submit" id="submit-form" hidden></button>
+            </EditForm>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">Cancelar</MudButton>
+        <MudButton ButtonType="ButtonType.Submit"
+                   HtmlTag="label"
+                   for="submit-form"
+                   Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   Disabled="@_isSaving">
+            @if (_isSaving)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                <MudText Class="ms-2">Guardando...</MudText>
+            }
+            else
+            {
+                <MudText>Guardar</MudText>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public int? UsuarioId { get; set; }
+    private Dictionary<string, object> InputAttributes { get; set; } = new Dictionary<string, object>() { { "autocomplete", "new-password" }, };
+    private UsuarioCreateDto _createModel = new();
+    private UsuarioEditDto _editModel = new();
+    private EditContext? _editContext;
+    private ValidationMessageStore? _messageStore;
+
+    private bool _isSaving;
+    private bool _isEdit => UsuarioId.HasValue;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (_isEdit)
+        {
+            _editContext = new EditContext(_editModel);
+            _messageStore = new ValidationMessageStore(_editContext);
+            _editContext.OnFieldChanged += (s, e) => _messageStore.Clear(e.FieldIdentifier);
+
+            var response = await _accountsApi.GetUsuarioById(UsuarioId!.Value);
+            if (response?.Data != null)
+            {
+                _editModel.UsuarioId = response.Data.UsuarioId;
+                _editModel.NombreCompleto = response.Data.NombreCompleto;
+                _editModel.Email = response.Data.Email;
+                _editModel.Telefono = response.Data.Telefono;
+                _editContext.NotifyValidationStateChanged();
+            }
+        }
+        else
+        {
+            _editContext = new EditContext(_createModel);
+            _messageStore = new ValidationMessageStore(_editContext);
+            _editContext.OnFieldChanged += (s, e) => _messageStore.Clear(e.FieldIdentifier);
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        _isSaving = true;
+        _messageStore?.Clear();
+
+        try
+        {
+            if (_isEdit)
+            {
+                await _accountsApi.UpdateUsuario(UsuarioId!.Value, _editModel);
+                _snackbarService.Add("Usuario actualizado correctamente", Severity.Success);
+            }
+            else
+            {
+                await _accountsApi.CreateUsuario(_createModel);
+                _snackbarService.Add("Usuario creado correctamente", Severity.Success);
+            }
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (YggdrasilApiException ex)
+        {
+            var model = _isEdit ? (object)_editModel : _createModel;
+            // _messageStore?.MapErrors(ex, model, _editContext!);
+            _snackbarService.Add("Por favor revise los errores de validación", Severity.Warning);
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error inesperado: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

@@ -1,0 +1,7 @@
+@attribute [Route(PageRoute.ProductosPage)]
+@attribute [AccessPoint(AppMenu.MenuConfiguracion, "Productos")]
+@using Atlas.Admin.Pages.Configuracion.Productos.Components
+
+<PageHeader Title="Productos" Icon="@AppMenu.MenuConfiguracionIcon"></PageHeader>
+
+<ProductoList></ProductoList>

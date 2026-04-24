@@ -1,0 +1,16 @@
+﻿@using Microsoft.JSInterop
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+
+@using Atlas.Components.States
+
+@inject AuthenticationStateProvider _authState
+@inject NavigationManager _navManager;
+@inject IJSRuntime _jsRuntime;
+@inject AppState _appState;
+@inject IDialogService _dialogService;
+@inject ISnackbar _snackbarService;

@@ -1,0 +1,31 @@
+﻿@using System.Net.Http
+@using System.Net.Http.Json
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@using Microsoft.AspNetCore.Components.WebAssembly.Http
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.JSInterop
+@using Atlas.Admin
+@using Atlas.Admin.Constants
+@using Atlas.Admin.Layout;
+@using Atlas.Client.Exceptions
+@using Atlas.Client.Services
+@using Atlas.Components.Attributes
+@using Atlas.Components.Dialogs
+@using Atlas.Components.Shared
+@using Atlas.Components.Constants
+@using Atlas.Components.Layout
+@using Atlas.Components.States
+@using Atlas.Shared.Common
+@using MudBlazor
+@using Blazilla
+@inject AuthenticationStateProvider _authState
+@inject AppState _appState;
+@inject NavigationManager _navManager;
+@inject IJSRuntime _jsRuntime;
+@inject IDialogService _dialogService;
+@inject ISnackbar _snackbarService;
+@inject AppSettingDto _appSetting;

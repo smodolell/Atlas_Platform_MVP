@@ -1,0 +1,14 @@
+﻿@using Atlas.Components.Constants
+<MudIconButton Icon="@(_appState.IsNavOpen ? IconsConstants.MenuCollapsed : IconsConstants.MenuExpand)" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+@code {
+
+       
+    async Task DrawerToggle()
+    {
+        _appState.ToggleNav();
+
+        var drawerModule = await _jsRuntime.InvokeAsync<IJSObjectReference>
+            ("import", "./_content/Atlas.Components/js/drawer.js");
+        await drawerModule.InvokeVoidAsync("handleDrawerToggled", _appState.IsNavOpen);
+    }
+}

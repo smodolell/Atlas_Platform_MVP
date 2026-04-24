@@ -1,0 +1,127 @@
+﻿@using Atlas.Client.Services
+@using Atlas.Shared.Accounts.Roles
+@inject IAccountsApi _accountsApi
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@(_isEdit? Icons.Material.Filled.Edit : Icons.Material.Filled.Add)" Class="mr-2" />
+            @(_isEdit ? "Editar Rol" : "Nuevo Rol")
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <EditForm EditContext="_editContext" OnValidSubmit="HandleSubmit">
+            <FluentValidator />
+            <MudTextField Label="Nombre"
+                          @bind-Value="_model.Name"
+                          For="@(() => _model.Name)"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Class="mb-4" />
+            <MudTextField Label="Descripción"
+                          @bind-Value="_model.Descripcion"
+                          For="@(() => _model.Descripcion)"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Lines="4"
+                          Class="mb-2" />
+            <button type="submit" id="submit-rol-form" hidden></button>
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">Cancelar</MudButton>
+        <MudButton ButtonType="ButtonType.Submit"
+                   HtmlTag="label"
+                   for="submit-rol-form"
+                   Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.Save"
+                   Disabled="@_isSaving">
+            @if (_isSaving)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                <MudText Class="ms-2">Guardando...</MudText>
+            }
+            else
+            {
+                <MudText>Guardar</MudText>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public int? RolId { get; set; }
+
+    private RolCreateDto _model = new();
+    private EditContext? _editContext;
+    private ValidationMessageStore? _messageStore;
+    private bool _isSaving;
+    private bool _isEdit => RolId.HasValue;
+
+   
+
+    protected override async Task OnInitializedAsync()
+    {
+        _editContext = new EditContext(_model);
+        _messageStore = new ValidationMessageStore(_editContext);
+        _editContext.OnFieldChanged += (s, e) => _messageStore.Clear(e.FieldIdentifier);
+
+        if (_isEdit)
+        {
+            var response = await _accountsApi.GetRolById(RolId!.Value);
+            if (response?.Data != null)
+            {
+                _model.Name = response.Data.Name ?? string.Empty;
+                _model.Descripcion = response.Data.Descripcion ?? string.Empty;
+                _editContext.NotifyValidationStateChanged();
+            }
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        _isSaving = true;
+        _messageStore?.Clear();
+
+        try
+        {
+            if (_isEdit)
+            {
+                await _accountsApi.UpdateRol(RolId!.Value,new RolUpdateDto
+                {
+                    RolId = RolId!.Value,
+                    Name = _model.Name,
+                    Descripcion = _model.Descripcion
+                });
+                _snackbarService.Add("Rol actualizado correctamente", Severity.Success);
+            }
+            else
+            {
+                await _accountsApi.CreateRol(new RolCreateDto
+                {
+                    Name = _model.Name,
+                    Descripcion = _model.Descripcion
+                });
+                _snackbarService.Add("Rol creado correctamente", Severity.Success);
+            }
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (YggdrasilApiException ex)
+        {
+            // _messageStore?.MapErrors(ex, _model, _editContext!);
+            _snackbarService.Add("Por favor revise los errores de validación", Severity.Warning);
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error inesperado: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

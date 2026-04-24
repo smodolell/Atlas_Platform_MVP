@@ -1,0 +1,138 @@
+@page "/login"
+@attribute [AllowAnonymous]
+@layout EmptyLayout
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Authorization
+@using Atlas.Client.Services
+@using Atlas.Client.Auth
+@using Atlas.Shared.Auth
+@inject IAuthApi ApiClient
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<div class="full-screen d-flex justify-center align-center">
+    <MudPaper Class="pa-8 d-flex justify-center align-center flex-column py-8" Elevation="4">
+        <MudText Typo="Typo.h4" Class="py-4">
+            <div class="d-flex align-center">
+                <MudImage Src="images/header-logo.png" Width="310" Height="104" />
+            </div>
+        </MudText>
+
+        <div style="width:300px;">
+            <EditForm Model="@_model" OnValidSubmit="OnValidSubmit" style="width:100%;">
+                <DataAnnotationsValidator />
+
+                <MudTextField Class="mt-4"
+                              @bind-Value="_model.Username"
+                              For="@(() => _model.Username)"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Placeholder="Ingrese el nombre de usuario"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.AccountCircle" />
+
+                <MudTextField Class="mt-4"
+                              @bind-Value="_model.Password"
+                              For="@(() => _model.Password)"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Placeholder="Ingrese contraseña"
+                              InputType="@_passwordInput"
+                              Adornment="Adornment.End"
+                              AdornmentIcon="@_passwordIcon"
+                              OnAdornmentClick="TogglePasswordVisibility"
+                              Clearable="true" />
+
+                <div class="mt-4">
+                    <MudButton ButtonType="ButtonType.Submit"
+                               Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               FullWidth="true"
+                               Disabled="@_isProcessing">
+                        @if (_isProcessing)
+                        {
+                            <MudProgressCircular Color="Color.Default" Indeterminate="true" Size="Size.Small" />
+                        }
+                        else
+                        {
+                            <MudIcon Icon="@Icons.Material.Filled.Login" />
+                        }
+                        <MudText Class="ml-2">Acceso</MudText>
+                    </MudButton>
+                </div>
+            </EditForm>
+        </div>
+    </MudPaper>
+</div>
+
+@code {
+    private LoginRequest _model = new LoginRequest
+    {
+        Username = "sergio.modolell@gmail.com",
+        Password = "Sergio123456%"
+    };
+
+    private bool _isProcessing;
+    private bool _passwordVisible;
+    private InputType _passwordInput = InputType.Password;
+    private string _passwordIcon = Icons.Material.Filled.VisibilityOff;
+
+    private void TogglePasswordVisibility()
+    {
+        if (_passwordVisible)
+        {
+            _passwordVisible = false;
+            _passwordIcon = Icons.Material.Filled.VisibilityOff;
+            _passwordInput = InputType.Password;
+        }
+        else
+        {
+            _passwordVisible = true;
+            _passwordIcon = Icons.Material.Filled.Visibility;
+            _passwordInput = InputType.Text;
+        }
+    }
+
+    private async Task OnValidSubmit()
+    {
+        _isProcessing = true;
+        try
+        {
+            var requestBody = new LoginCommand
+            {
+                Email = _model.Username,
+                Contrasenia = _model.Password
+            };
+
+            var response = await ApiClient.Login(requestBody);
+
+            if (response != null && !string.IsNullOrEmpty(response.Data!.Token))
+            {
+                await JS.InvokeVoidAsync("localStorage.setItem", "authToken", response.Data.Token);
+                ((CustomAuthStateProvider)AuthStateProvider).NotifyUserAuthentication(response.Data.Token);
+                Snackbar.Add("Bienvenido al sistema", Severity.Success);
+                Navigation.NavigateTo("/");
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Credenciales inválidas o error de conexión", Severity.Error);
+            Console.WriteLine(ex.Message);
+        }
+        finally
+        {
+            _isProcessing = false;
+        }
+    }
+
+    public class LoginRequest
+    {
+        [Required(ErrorMessage = "El usuario es obligatorio")]
+        public string Username { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "La contraseña es obligatoria")]
+        public string Password { get; set; } = string.Empty;
+    }
+}

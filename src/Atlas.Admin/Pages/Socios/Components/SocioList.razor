@@ -1,0 +1,66 @@
+<h3>SocioList</h3>
+@* 
+@code {
+
+}
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error al cargar datos: {ex.Message}", Severity.Error);
+            return new GridData<SocioListItemDto>() { TotalItems = 0, Items = new List<SocioListItemDto>() };
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+      
+    }
+
+    private async Task AddClick()
+    {
+        var dialog = await _dialogService.ShowAsync<SocioFormDialog>("Nuevo Socio", new DialogParameters(), new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            CloseButton = true
+        });
+        var result = await dialog.Result;
+        if (!result!.Canceled)
+            await dataGridRef.ReloadServerData();
+    }
+
+    private async Task EditClick(Guid id)
+    {
+        var parameters = new DialogParameters { { "SocioId", id } };
+        var dialog = await _dialogService.ShowAsync<SocioFormDialog>("Editar Socio", parameters, new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            CloseButton = true
+        });
+        var result = await dialog.Result;
+        if (!result!.Canceled)
+            await dataGridRef.ReloadServerData();
+    }
+
+
+   
+
+    private async Task DeleteClick(SocioListItemDto item)
+    {
+        await _dialogService.ShowConfirmDialog($"¿Desea eliminar el Socio {item.Nombre} {item.Apellido}?", "Eliminar", async (e) =>
+        {
+            try
+            {
+                var result = await _sociosApi.DeleteSocio(item.Id);
+                await dataGridRef.ReloadServerData();
+                _snackbarService.Add(result.Message, MudBlazor.Severity.Success);
+            }
+            catch (Exception ex)
+            {
+                _snackbarService.Add(ex.Message, MudBlazor.Severity.Error);
+            }
+        });
+    }
+}
+ *@

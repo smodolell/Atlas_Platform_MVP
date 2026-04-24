@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/Applications/">
+    <Project Path="src/Atlas.Admin/Atlas.Admin.csproj" Id="ec1bb26f-7f91-42f0-a3e6-d64e45bd3960" />
+    <Project Path="src/Atlas.Member/Atlas.Member.csproj" Id="bffdc89f-7be8-4022-8c7b-687a909d8d92" />
+  </Folder>
+  <Folder Name="/Applications/Shared/">
+    <Project Path="src/Atlas.Client/Atlas.Client.csproj" Id="5aa6eba8-6a15-43bd-8a96-a036600d35eb" />
+    <Project Path="src/Atlas.Components/Atlas.Components.csproj" Id="cc7c717d-4ee3-48dc-a718-585585473b27" />
+  </Folder>
+  <Folder Name="/Backend/">
+    <Project Path="src/Atlas.ApiService/Atlas.ApiService.csproj" Id="7c231c2a-9b27-4407-a8e5-8f7eacc4cbc6" />
+    <Project Path="src/Atlas.Application/Atlas.Application.csproj" Id="84d7ecd6-b3df-4d61-b868-c996f27671da" />
+    <Project Path="src/Atlas.Domain/Atlas.Domain.csproj" />
+    <Project Path="src/Atlas.Infrastructure/Atlas.Infrastructure.csproj" Id="d83042f2-c3a9-45ce-af8c-fcb86101ddba" />
+  </Folder>
+  <Project Path="src/Atlas.Shared/Atlas.Shared.csproj" Id="15b368a8-624a-4000-97cb-c9a85f9044f0" />
+</Solution>

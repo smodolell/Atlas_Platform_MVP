@@ -1,0 +1,17 @@
+﻿<MudToggleIconButton @bind-Toggled="_appState.IsDark" 
+                     Style="margin-right:12px;"
+                     Icon="@Icons.Material.Filled.DarkMode"
+                     Color="@Color.Inherit" 
+                     ToggledIcon="@Icons.Material.Filled.LightMode"
+                     ToggledColor="@Color.Inherit"/>
+@code{
+
+    protected override void OnInitialized()
+    {
+        _appState.OnChange+= OnThemeChanged;
+    }
+    private void OnThemeChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+}

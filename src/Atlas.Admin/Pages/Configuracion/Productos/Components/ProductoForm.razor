@@ -1,0 +1,99 @@
+@using Atlas.Shared.Configuracion
+
+<EditForm EditContext="_editContext" OnValidSubmit="HandleSubmit" autocomplete="off">
+    <FluentValidator />
+    <MudGrid>
+        <MudItem xs="12" sm="6">
+            <MudTextField Label="Nombre"
+                          @bind-Value="Model.NomProducto"
+                          For="@(() => Model.NomProducto)"
+                          Variant="Variant.Outlined"
+                          Class="mb-4" />
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudTextField Label="Descripción"
+                          @bind-Value="Model.Descripcion"
+                          For="@(() => Model.Descripcion)"
+                          Variant="Variant.Outlined"
+                          Class="mb-4" />
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudNumericField Label="Precio"
+                             @bind-Value="Model.Precio"
+                             For="@(() => Model.Precio)"
+                             Variant="Variant.Outlined"
+                             Format="C2"
+                             Step="0.01M"
+                             Class="mb-4" />
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudNumericField Label="Cupo Máximo"
+                             @bind-Value="Model.CupoMaximo"
+                             For="@(() => Model.CupoMaximo)"
+                             Variant="Variant.Outlined"
+                             Step="1"
+                             Class="mb-4" />
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudSwitch @bind-Value="Model.Activo" Label="Activo" Color="Color.Primary" />
+        </MudItem>
+    </MudGrid>
+    
+    <div class="mt-4">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" ButtonType="ButtonType.Submit" Class="mr-2" Disabled="IsSaving">
+            @if (IsSaving)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                <MudText Class="ms-2">Guardando...</MudText>
+            }
+            else
+            {
+                <MudText>Guardar</MudText>
+            }
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="OnCancel">Cancelar</MudButton>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter]
+    public ProductoEditDto Model { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<ProductoEditDto> OnValidSubmit { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    [Parameter]
+    public bool IsSaving { get; set; }
+
+    private EditContext? _editContext;
+    private ValidationMessageStore? _messageStore;
+
+    protected override void OnInitialized()
+    {
+        _editContext = new EditContext(Model);
+        _messageStore = new ValidationMessageStore(_editContext);
+        _editContext.OnFieldChanged += (s, e) => _messageStore.Clear(e.FieldIdentifier);
+    }
+    
+    protected override void OnParametersSet()
+    {
+        if (_editContext != null && _editContext.Model != Model)
+        {
+            _editContext = new EditContext(Model);
+            _messageStore = new ValidationMessageStore(_editContext);
+            _editContext.OnFieldChanged += (s, e) => _messageStore.Clear(e.FieldIdentifier);
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (OnValidSubmit.HasDelegate)
+        {
+            _messageStore?.Clear();
+            await OnValidSubmit.InvokeAsync(Model);
+        }
+    }
+}

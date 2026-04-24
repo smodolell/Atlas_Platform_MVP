@@ -1,0 +1,10 @@
+﻿@inject NavigationManager Navigation
+<h1>asdasd</h1>
+@code {
+    protected override void OnInitialized()
+    {
+        // Redireccionamos a la página de login que definiste en este mismo módulo
+        // "login" debe coincidir con la directiva @page "/login" de tu Login.razor
+        Navigation.NavigateTo("login", forceLoad: false);
+    }
+}

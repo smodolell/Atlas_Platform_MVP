@@ -1,0 +1,10 @@
+﻿@attribute [Route(PageRoute.AdminRoles)]
+@attribute [AccessPoint(AppMenu.MenuSeguridad, "Roles")]
+@using Atlas.Admin.Pages.Roles.Components
+<PageHeader Title="Roles" Icon="@AppMenu.MenuSeguridadIcon"></PageHeader>
+
+<RolList></RolList>
+
+@code {
+
+}

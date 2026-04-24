@@ -1,0 +1,53 @@
+@attribute [Route(PageRoute.NewProductoPage)]
+@attribute [AccessPoint(AppMenu.MenuConfiguracion, "Nuevo Producto")]
+@using Atlas.Shared.Configuracion
+@using Atlas.Client.Clients
+@using Atlas.Admin.Pages.Configuracion.Productos.Components
+@inject IConfiguracionApi _configuracionApi
+@inject ISnackbar _snackbarService
+@inject NavigationManager _navigationManager
+
+<PageHeader Title="Nuevo Producto" Icon="@Icons.Material.Filled.AddBox" BackRoute="@PageRoute.ProductosPage"></PageHeader>
+
+<MudPaper Elevation="2" Class="pa-4 mt-4">
+    <ProductoForm Model="_model"
+                  IsSaving="_isSaving"
+                  OnValidSubmit="HandleSave"
+                  OnCancel="GoBack" />
+</MudPaper>
+
+@code {
+    private ProductoEditDto _model = new();
+    private bool _isSaving;
+
+    private async Task HandleSave(ProductoEditDto model)
+    {
+        _isSaving = true;
+        try
+        {
+            var response = await _configuracionApi.CreateProductoAsync(model);
+            if (response.IsSuccessStatusCode)
+            {
+                _snackbarService.Add("Producto creado correctamente", Severity.Success);
+                _navigationManager.NavigateTo(PageRoute.ProductosPage);
+            }
+            else
+            {
+                _snackbarService.Add("Error al crear el producto", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error inesperado: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private void GoBack()
+    {
+        _navigationManager.NavigateTo(PageRoute.ProductosPage);
+    }
+}

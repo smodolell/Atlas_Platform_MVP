@@ -1,0 +1,201 @@
+﻿@using Atlas.Client.Services
+@using Atlas.Shared.Accounts.Roles
+@inject IAccountsApi _accountsApi
+
+<MudDialog>
+    <DialogContent>
+        <MudTreeView T="MenuTreeItemDto" Items="_treeItems" Hover="true">
+            <ItemTemplate>
+                <MudTreeViewItem @bind-Expanded="@context.Expanded" Items="@context.Children" Value="context.Value">
+                    <Content>
+                        <MudTreeViewItemToggleButton @bind-Expanded="@context.Expanded" Visible="context.HasChildren" />
+                        <MudCheckBox Dense="true"
+                                     T="bool"
+                                     Value="@context.Value!.IsChecked"
+                                     ValueChanged="@((v) => CheckedChanged(v, context.Value))">
+                        </MudCheckBox>
+                        <MudText Typo="Typo.subtitle2" Style="user-select:none;">@context.Value.MenuName</MudText>
+                        <MudSpacer />
+                    </Content>
+                </MudTreeViewItem>
+            </ItemTemplate>
+        </MudTreeView>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled"
+                   FullWidth="false"
+                   Class="mt-2"
+                   Color="Color.Primary"
+                   Size="Size.Medium"
+                   ButtonType="ButtonType.Button"
+                   StartIcon="@Icons.Material.Filled.Save"
+                   OnClick="SubmitRoleMenu">
+            Guardar
+        </MudButton>
+        <MudButton Variant="Variant.Filled"
+                   FullWidth="false"
+                   Color="Color.Default"
+                   Size="Size.Medium"
+                   ButtonType="ButtonType.Button"
+                   OnClick="Close"
+                   StartIcon="@Icons.Material.Filled.Close">
+            Cerrar
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance? MudDialog { get; set; }
+
+    [Parameter] public int RolId { get; set; }
+
+    private List<TreeItemData<MenuTreeItemDto>> _treeItems = new();
+    private List<MenuTreeItemDto>? _model;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var result = await _accountsApi.GetMenuRol(_appSetting.ApplicationId,RolId);
+            _model = result.Data ?? new List<MenuTreeItemDto>();
+            
+            _treeItems.Clear();
+            
+            foreach (var item in _model)
+            {
+                var children = new List<TreeItemData<MenuTreeItemDto>>();
+                
+                foreach (var itemChild in item.Childs)
+                {
+                    children.Add(new TreeItemData<MenuTreeItemDto>
+                    {
+                        Value = itemChild,
+                        Expanded = false,
+                        Selected = itemChild.IsChecked,
+                        Children = new List<TreeItemData<MenuTreeItemDto>>()
+                    });
+                }
+                
+                var itemTree = new TreeItemData<MenuTreeItemDto>
+                {
+                    Value = item,
+                    Expanded = false,
+                    Selected = item.IsChecked,
+                    Children = children
+                };
+                
+                _treeItems.Add(itemTree);
+            }
+            
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error al cargar los menús: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task SubmitRoleMenu()
+    {
+        if (_model == null) return;
+        
+        try
+        {
+            var result = await _accountsApi.SaveMenuRol(RolId, _model);
+            if (result.Success)
+            {
+                _snackbarService.Add(result.Message ?? "Menús guardados correctamente", Severity.Success);
+                MudDialog?.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                _snackbarService.Add(result.Errors?.FirstOrDefault() ?? "Error al guardar los menús", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add(ex.Message ?? "Error", Severity.Error);
+        }
+    }
+
+    private void CheckedChanged(bool value, MenuTreeItemDto item)
+    {
+        LoopCheckedChange(value, item);
+        
+        if (value)
+        {
+            LoopParentChecked(item);
+        }
+        
+        // Actualizar el estado seleccionado en el TreeItemData
+        UpdateTreeItemSelectedState();
+        
+        StateHasChanged();
+    }
+
+    private void LoopCheckedChange(bool value, MenuTreeItemDto item)
+    {
+        item.IsChecked = value;
+        foreach (var child in item.Childs)
+        {
+            LoopCheckedChange(value, child);
+        }
+    }
+
+    private void LoopParentChecked(MenuTreeItemDto item)
+    {
+        if (_model == null) return;
+        
+        var parent = FindParentItem(item, _model);
+        if (parent != null)
+        {
+            parent.IsChecked = true;
+            LoopParentChecked(parent);
+        }
+    }
+
+    private MenuTreeItemDto? FindParentItem(MenuTreeItemDto item, List<MenuTreeItemDto> itemList)
+    {
+        foreach (var parent in itemList)
+        {
+            if (parent.Childs.Contains(item))
+            {
+                return parent;
+            }
+            
+            var found = FindParentItem(item, parent.Childs);
+            if (found != null)
+            {
+                return found;
+            }
+        }
+        
+        return null;
+    }
+    
+    private void UpdateTreeItemSelectedState()
+    {
+        if (_model == null) return;
+        
+        foreach (var treeItem in _treeItems)
+        {
+            UpdateTreeItemSelectedStateRecursive(treeItem, _model);
+        }
+    }
+    
+    private void UpdateTreeItemSelectedStateRecursive(ITreeItemData<MenuTreeItemDto> treeItem, List<MenuTreeItemDto> modelItems)
+    {
+        var item = modelItems.FirstOrDefault(x => x.MenuId == treeItem.Value?.MenuId);
+        if (item != null)
+        {
+            treeItem.Selected = item.IsChecked;
+        }
+        
+        foreach (var child in treeItem.Children)
+        {
+            UpdateTreeItemSelectedStateRecursive(child, modelItems.SelectMany(x => x.Childs).ToList());
+        }
+    }
+
+    private void Close() => MudDialog?.Close(DialogResult.Ok(false));
+}

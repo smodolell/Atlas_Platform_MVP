@@ -1,0 +1,91 @@
+﻿@using Atlas.Components.Themes
+@using Atlas.Components.Pages
+@using Atlas.Components
+@using Atlas.Components.UserAvatar.Dialogs
+@using Atlas.Client.Auth
+@using Atlas.Client.Services
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject NavigationManager Navigation
+<ProvidersAggregate></ProvidersAggregate>
+<PageTitle>BlazorAdmin</PageTitle>
+
+<MudLayout>
+    <AuthorizeView Context="authContext">
+        <Authorized>
+            <AuthorizedLayout OnLogout="Logout">
+                <Child>
+                    <LoggerErrorBoundary @ref="_errorBoundary">
+                        <ChildContent>
+                            @Body
+                        </ChildContent>
+                        <ErrorContent>
+                            <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="ma-4">
+                                No se pudo cargar esta sección. Intente navegar a otra página.
+                            </MudAlert>
+                        </ErrorContent>
+                    </LoggerErrorBoundary>
+                </Child>
+            </AuthorizedLayout>
+        </Authorized>
+        <NotAuthorized>
+            <RedirectToLogin />
+        </NotAuthorized>
+    </AuthorizeView>
+</MudLayout>
+
+<div id="blazor-error-ui">
+    Ha ocurrido un error inesperado.
+    <a href="" class="reload">Recargar</a>
+    <a class="dismiss">🗙</a>
+</div>
+
+@code {
+    private LoggerErrorBoundary? _errorBoundary;
+    [Inject] INavigationApi NavigationApi { get; set; } = null!;
+   
+    protected override async Task OnInitializedAsync()
+    {
+        await _appState.InitializeAsync();
+        var result = await NavigationApi.GetNavbar();
+
+        if (result.Data != null)
+        {
+            _appState.SetMenu(result.Data);
+        }
+        Navigation.LocationChanged += HandleLocationChanged;
+    }
+
+    private async Task OpenSettings()
+    {
+        var dialog = await _dialogService.ShowAsync<ProfileSetting>();
+        await dialog.Result;
+    }
+
+    private async Task Logout()
+    {
+        await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
+
+        if (_authState is CustomAuthStateProvider custom)
+            custom.NotifyUserLogout();
+
+        _navManager.NavigateTo("/login");
+    }
+    private void HandleLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        // Si la pantalla estaba "bloqueada" por un error, esto la libera al cambiar de página
+        if (_errorBoundary != null)
+        {
+            _errorBoundary.Recover();
+            StateHasChanged();
+        }
+    }
+
+    public void Dispose()
+    {
+        // Siempre desvincular eventos para evitar fugas de memoria en WASM
+        Navigation.LocationChanged -= HandleLocationChanged;
+    }
+
+
+}

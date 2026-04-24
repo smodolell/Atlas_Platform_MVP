@@ -1,0 +1,58 @@
+﻿<MudMenu Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Dense="true"
+         AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopRight">
+    <ActivatorContent>
+        <MudChip T="string"
+                 Icon="@Icons.Material.Filled.Person"
+                 Color="Color.Inherit"
+                 Variant="Variant.Text" OnClick="@(() => context.ToggleAsync())">
+            @_appState.UserName
+        </MudChip>
+    </ActivatorContent>
+    <ChildContent>
+        <MudContainer Class="d-flex flex-column pa-1" Style="width:180px;">
+            <MudContainer Class="d-flex flex-column align-center justify-center my-3">
+                <MudText Typo="Typo.subtitle1" Style="max-width:160px;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;">
+                    @_appState.FullName
+                </MudText>
+            </MudContainer>
+            <MudDivider Class="mb-2" />
+            <MudMenuItem Icon="@Icons.Material.Filled.Settings" OnClick="OnSettingsClick">
+                Configuración
+            </MudMenuItem>
+            <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="OnLogoutClick">
+                Cerrar Seccion
+            </MudMenuItem>
+        </MudContainer>
+    </ChildContent>
+</MudMenu>
+@code {
+    string _userName = string.Empty;
+    string _fullName = string.Empty;
+    string? _avatar = string.Empty;
+
+    [Parameter] public EventCallback OnLogout { get; set; }
+    [Parameter] public EventCallback OnSettings { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _appState.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        _appState.OnChange -= StateHasChanged;
+    }
+
+    private async Task OnLogoutClick()
+    {
+        if (OnLogout.HasDelegate)
+            await OnLogout.InvokeAsync();
+    }
+
+    private async Task OnSettingsClick()
+    {
+        if (OnSettings.HasDelegate)
+            await OnSettings.InvokeAsync();
+    }
+
+}

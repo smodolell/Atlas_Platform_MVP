@@ -1,0 +1,11 @@
+﻿<MudThemeProvider IsDarkMode="@_appState.IsDark" Theme="@_appState.MudTheme" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+@code {
+    protected override void OnInitialized()
+    {
+        _appState.OnChange += StateHasChanged;
+    }
+}
