@@ -1,4 +1,4 @@
-﻿using Atlas.Domain.Entities;
+using Atlas.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -58,6 +58,12 @@ public class SocioConfiguration : IEntityTypeConfiguration<Socio>
             .HasMaxLength(20)
             .HasColumnName("Telefono")
             .HasColumnType("nvarchar(20)")
+            .IsRequired(false);
+
+        builder.Property(s => s.FotoUrl)
+            .HasMaxLength(500)
+            .HasColumnName("FotoUrl")
+            .HasColumnType("nvarchar(500)")
             .IsRequired(false);
 
         // Índices

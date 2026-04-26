@@ -54,5 +54,15 @@ public class AsistenciaConfiguration : IEntityTypeConfiguration<Asistencia>
             .HasForeignKey(a => a.SocioId)
             .OnDelete(DeleteBehavior.Restrict);  // No borrar socio si tiene asistencias
 
+  
+        builder.HasOne(a => a.Plan)
+            .WithMany(p => p.Asistencias)
+            .HasForeignKey(a => a.PlanId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(a => a.Sesion)
+            .WithMany(ps => ps.Asistencias)
+            .HasForeignKey(a => a.PlanSesionId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

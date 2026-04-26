@@ -1,9 +1,21 @@
-﻿@using Atlas.Shared.Socios
+@using Atlas.Shared.Socios
 @using Atlas.Shared.Configuracion
 @inject ISelectListsApi _selectListsApi;
 <FormSection Title="Información del Socio">
     <EditForm EditContext="_editContext" OnValidSubmit="HandleSubmit" autocomplete="off">
         <FluentValidator />
+        <div class="d-flex justify-center mb-4">
+            <MudAvatar Size="Size.Large" Color="Color.Primary" Class="mr-3" Style="width: 100px; height: 100px; text-transform: uppercase; font-size: 3rem;">
+                @if (!string.IsNullOrEmpty(Model.FotoUrl))
+                {
+                    <MudImage ObjectFit="ObjectFit.Cover" Src="@Model.FotoUrl" Alt="Foto de Perfil" />
+                }
+                else if (!string.IsNullOrEmpty(Model.Nombre))
+                {
+                    @Model.Nombre.Substring(0, 1)
+                }
+            </MudAvatar>
+        </div>
         <MudGrid>
             <MudItem xs="12" sm="6">
                 <MudTextField Label="Nombre"
@@ -50,6 +62,14 @@
                 <MudTextField Label="Teléfono"
                               @bind-Value="Model.Telefono"
                               For="@(() => Model.Telefono)"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Class="mb-4" />
+            </MudItem>
+            <MudItem xs="12" sm="12">
+                <MudTextField Label="URL de Foto de Perfil"
+                              @bind-Value="Model.FotoUrl"
+                              For="@(() => Model.FotoUrl)"
                               Variant="Variant.Outlined"
                               Margin="Margin.Dense"
                               Class="mb-4" />

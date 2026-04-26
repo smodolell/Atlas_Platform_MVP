@@ -53,7 +53,23 @@
         </MudStack>
     </ToolBarContent>
     <Columns>
-        <PropertyColumn Property="x => x.NombreCompleto" Title="Nombre de Socio" StickyLeft="true" />
+        <TemplateColumn Title="Socio" StickyLeft="true">
+            <CellTemplate>
+                <div class="d-flex align-center">
+                    <MudAvatar Size="Size.Small" Color="Color.Primary" Class="mr-3" Style="text-transform: uppercase;">
+                        @if (!string.IsNullOrEmpty(context.Item.FotoUrl))
+                        {
+                            <MudImage ObjectFit="ObjectFit.Cover" Src="@context.Item.FotoUrl" Alt="Foto de Perfil" />
+                        }
+                        else if (!string.IsNullOrEmpty(context.Item.Nombre))
+                        {
+                            @context.Item.Nombre.Substring(0, 1)
+                        }
+                    </MudAvatar>
+                    <MudText Typo="Typo.body2">@context.Item.NombreCompleto</MudText>
+                </div>
+            </CellTemplate>
+        </TemplateColumn>
         <PropertyColumn Property="x => x.Email" Title="Email" />
         <PropertyColumn Property="x => x.Telefono" Title="Teléfono" />
         <TemplateColumn Title="Acciones" CellClass="d-flex justify-end" StickyRight="true">

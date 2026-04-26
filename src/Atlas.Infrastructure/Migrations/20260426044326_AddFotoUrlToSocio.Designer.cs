@@ -4,6 +4,7 @@ using Atlas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Atlas.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260426044326_AddFotoUrlToSocio")]
+    partial class AddFotoUrlToSocio
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -149,9 +152,6 @@ namespace Atlas.Infrastructure.Migrations
                     b.Property<int>("PlanId")
                         .HasColumnType("int");
 
-                    b.Property<Guid>("PlanSesionId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<Guid>("SocioId")
                         .HasColumnType("uniqueidentifier");
 
@@ -162,8 +162,6 @@ namespace Atlas.Infrastructure.Migrations
 
                     b.HasIndex("PlanId");
 
-                    b.HasIndex("PlanSesionId");
-
                     b.HasIndex("SocioId")
                         .HasDatabaseName("IX_Asistencias_SocioId");
 
@@ -171,32 +169,6 @@ namespace Atlas.Infrastructure.Migrations
                         .HasDatabaseName("IX_Asistencias_Socio_FechaEntrada");
 
                     b.ToTable("Asistencias", (string)null);
-                });
-
-            modelBuilder.Entity("Atlas.Domain.Entities.Empleado", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Apellido")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Nombre", "Apellido")
-                        .HasDatabaseName("IX_Empleado_NombreApellido");
-
-                    b.ToTable("Empleados", (string)null);
                 });
 
             modelBuilder.Entity("Atlas.Domain.Entities.Membresia", b =>
@@ -512,98 +484,6 @@ namespace Atlas.Infrastructure.Migrations
                         .HasDatabaseName("IX_Planes_Activo_NomPlan");
 
                     b.ToTable("Planes", (string)null);
-                });
-
-            modelBuilder.Entity("Atlas.Domain.Entities.PlanHorario", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Activo")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
-
-                    b.Property<int>("DiaSemana")
-                        .HasColumnType("int");
-
-                    b.Property<int>("EmpleadoId")
-                        .HasColumnType("int");
-
-                    b.Property<TimeOnly>("HoraFin")
-                        .HasColumnType("time");
-
-                    b.Property<TimeOnly>("HoraInicio")
-                        .HasColumnType("time");
-
-                    b.Property<int>("PlanId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EmpleadoId")
-                        .HasDatabaseName("IX_PlanHorario_EmpleadoId");
-
-                    b.HasIndex("PlanId", "EmpleadoId", "DiaSemana")
-                        .HasDatabaseName("IX_PlanHorario_PlanEmpleadoDia");
-
-                    b.ToTable("PlanesHorario", null, t =>
-                        {
-                            t.HasCheckConstraint("CK_PlanHorario_HoraFin", "HoraFin > HoraInicio");
-                        });
-                });
-
-            modelBuilder.Entity("Atlas.Domain.Entities.PlanSesion", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasDefaultValueSql("NEWID()");
-
-                    b.Property<int>("EmpleadoId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Estado")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(1);
-
-                    b.Property<DateOnly>("Fecha")
-                        .HasColumnType("date");
-
-                    b.Property<TimeOnly>("HoraFin")
-                        .HasColumnType("time");
-
-                    b.Property<TimeOnly>("HoraInicio")
-                        .HasColumnType("time");
-
-                    b.Property<int>("PlanHorarioId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PlanId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EmpleadoId")
-                        .HasDatabaseName("IX_PlanSesion_EmpleadoId");
-
-                    b.HasIndex("Estado")
-                        .HasDatabaseName("IX_PlanSesion_Estado");
-
-                    b.HasIndex("PlanHorarioId")
-                        .HasDatabaseName("IX_PlanSesion_PlanHorarioId");
-
-                    b.HasIndex("PlanId", "Fecha")
-                        .HasDatabaseName("IX_PlanSesion_PlanFecha");
-
-                    b.HasIndex("Fecha", "Estado", "PlanId")
-                        .HasDatabaseName("IX_PlanSesion_FechaEstadoPlan");
-
-                    b.ToTable("PlanesSesion", (string)null);
                 });
 
             modelBuilder.Entity("Atlas.Domain.Entities.Rol", b =>
@@ -1008,14 +888,8 @@ namespace Atlas.Infrastructure.Migrations
             modelBuilder.Entity("Atlas.Domain.Entities.Asistencia", b =>
                 {
                     b.HasOne("Atlas.Domain.Entities.Plan", "Plan")
-                        .WithMany("Asistencias")
+                        .WithMany()
                         .HasForeignKey("PlanId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Atlas.Domain.Entities.PlanSesion", "Sesion")
-                        .WithMany("Asistencias")
-                        .HasForeignKey("PlanSesionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -1026,8 +900,6 @@ namespace Atlas.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Plan");
-
-                    b.Navigation("Sesion");
 
                     b.Navigation("Socio");
                 });
@@ -1090,52 +962,6 @@ namespace Atlas.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Periodicidad");
-                });
-
-            modelBuilder.Entity("Atlas.Domain.Entities.PlanHorario", b =>
-                {
-                    b.HasOne("Atlas.Domain.Entities.Empleado", "Empleado")
-                        .WithMany("Horarios")
-                        .HasForeignKey("EmpleadoId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Atlas.Domain.Entities.Plan", "Plan")
-                        .WithMany("Horarios")
-                        .HasForeignKey("PlanId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Empleado");
-
-                    b.Navigation("Plan");
-                });
-
-            modelBuilder.Entity("Atlas.Domain.Entities.PlanSesion", b =>
-                {
-                    b.HasOne("Atlas.Domain.Entities.Empleado", "Empleado")
-                        .WithMany()
-                        .HasForeignKey("EmpleadoId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Atlas.Domain.Entities.PlanHorario", "Horario")
-                        .WithMany()
-                        .HasForeignKey("PlanHorarioId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Atlas.Domain.Entities.Plan", "Plan")
-                        .WithMany("Sesiones")
-                        .HasForeignKey("PlanId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Empleado");
-
-                    b.Navigation("Horario");
-
-                    b.Navigation("Plan");
                 });
 
             modelBuilder.Entity("Atlas.Domain.Entities.RolAccessPoint", b =>
@@ -1218,11 +1044,6 @@ namespace Atlas.Infrastructure.Migrations
                     b.Navigation("AccessPoints");
                 });
 
-            modelBuilder.Entity("Atlas.Domain.Entities.Empleado", b =>
-                {
-                    b.Navigation("Horarios");
-                });
-
             modelBuilder.Entity("Atlas.Domain.Entities.Membresia", b =>
                 {
                     b.Navigation("MembresiaPagos");
@@ -1245,18 +1066,7 @@ namespace Atlas.Infrastructure.Migrations
 
             modelBuilder.Entity("Atlas.Domain.Entities.Plan", b =>
                 {
-                    b.Navigation("Asistencias");
-
-                    b.Navigation("Horarios");
-
                     b.Navigation("Membresias");
-
-                    b.Navigation("Sesiones");
-                });
-
-            modelBuilder.Entity("Atlas.Domain.Entities.PlanSesion", b =>
-                {
-                    b.Navigation("Asistencias");
                 });
 
             modelBuilder.Entity("Atlas.Domain.Entities.Socio", b =>

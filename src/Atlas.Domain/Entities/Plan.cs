@@ -15,5 +15,8 @@ public class Plan
 
     public Periodicidad Periodicidad { get; set; } = null!;
 
+    public ICollection<PlanSesion> Sesiones { get; set; } = new List<PlanSesion>();
+    public ICollection<PlanHorario> Horarios { get; set; } = new HashSet<PlanHorario>();
     public ICollection<Membresia> Membresias { get; set; } = new HashSet<Membresia>();
+    public ICollection<Asistencia> Asistencias { get; set; } = new HashSet<Asistencia>();
 }
