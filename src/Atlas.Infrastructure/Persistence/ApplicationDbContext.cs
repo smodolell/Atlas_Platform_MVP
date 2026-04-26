@@ -24,6 +24,12 @@ public class ApplicationDbContext : IdentityDbContext<Usuario, Rol, int>, IAtlas
 
     public DbSet<Membresia> Membresias => Set<Membresia>();
 
+    public DbSet<TipoPago> TiposPago => Set<TipoPago>();
+
+    public DbSet<Pago> Pagos => Set<Pago>();
+
+    public DbSet<MembresiaPago> MembresiaPagos => Set<MembresiaPago>();
+
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
     {
     }

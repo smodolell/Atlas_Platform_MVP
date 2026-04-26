@@ -13,7 +13,11 @@ public interface ISelectListsApi
 
     [Get("/api/select-lists/planes")]
     Task<ApiResponseDto<List<SelectListItemDto>>> GetPlanSelectListAsync(
-    [Query] string? searchTerm = null,
-    [Query] int? maxResults = null,
-    CancellationToken cancellationToken = default);
+        [Query] string? searchTerm = null,
+        [Query] int? maxResults = null,
+        CancellationToken cancellationToken = default);
+
+    [Get("/api/select-lists/tipos-pago")]
+    Task<ApiResponseDto<List<SelectListItemDto>>> GetTipoPagoSelectListAsync(
+        CancellationToken cancellationToken = default);
 }

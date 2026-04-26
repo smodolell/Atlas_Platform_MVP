@@ -1,0 +1,93 @@
+@attribute [Route(PageRoute.EditTipoPagoPage + "/{TipoPagoId:int}")]
+@attribute [AccessPoint(AppMenu.MenuCatalogo, "Editar Tipo de Pago", AccessPointType.Page)]
+@using Atlas.Shared.Catalogos
+@using Atlas.Client.Services
+@using Atlas.Admin.Pages.Catalogos.TipoPago.Components
+@inject ICatalogosApi _catalogosApi
+
+<PageHeader Title="Editar Tipo de Pago" Icon="@Icons.Material.Filled.Edit">
+    <MudBreadcrumbs Items="_breadcrumbItems"></MudBreadcrumbs>
+</PageHeader>
+
+<MudPaper Elevation="2" Class="pa-4 mt-4">
+    @if (_isLoading)
+    {
+        <MudProgressCircular Indeterminate="true" Class="mt-5 mb-5 mx-auto d-flex" />
+    }
+    else if (_model == null)
+    {
+        <MudAlert Severity="Severity.Error">Tipo de pago no encontrado</MudAlert>
+        <MudButton Variant="Variant.Outlined" Class="mt-3" OnClick="GoBack">Volver</MudButton>
+    }
+    else
+    {
+        <TipoPagoForm Model="_model"
+                      IsSaving="_isSaving"
+                      OnValidSubmit="HandleSave"
+                      OnCancel="GoBack" />
+    }
+</MudPaper>
+
+@code {
+    [Parameter]
+    public int TipoPagoId { get; set; }
+
+    private TipoPagoEditDto? _model;
+    private bool _isSaving;
+    private bool _isLoading = true;
+
+    private readonly List<BreadcrumbItem> _breadcrumbItems =
+    [
+        new BreadcrumbItem("Inicio", href: "/"),
+        new BreadcrumbItem("Tipos de Pago", href: PageRoute.TiposPagoPage),
+        new BreadcrumbItem("Editar", href: null, disabled: true)
+    ];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var response = await _catalogosApi.GetTipoPagoByIdAsync(TipoPagoId);
+            if (response.Content?.Data != null)
+                _model = response.Content.Data;
+            else
+                _snackbarService.Add("Tipo de pago no encontrado.", Severity.Warning);
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error al cargar: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task HandleSave(TipoPagoEditDto model)
+    {
+        _isSaving = true;
+        try
+        {
+            var response = await _catalogosApi.UpdateTipoPagoAsync(TipoPagoId, model);
+            if (response.IsSuccessStatusCode)
+            {
+                _snackbarService.Add("Tipo de pago actualizado correctamente", Severity.Success);
+                _navManager.NavigateTo(PageRoute.TiposPagoPage);
+            }
+            else
+            {
+                _snackbarService.Add("Error al actualizar el tipo de pago", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error inesperado: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private void GoBack() => _navManager.NavigateTo(PageRoute.TiposPagoPage);
+}

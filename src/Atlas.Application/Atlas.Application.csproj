@@ -30,5 +30,8 @@
     <ProjectReference Include="..\Atlas.Domain\Atlas.Domain.csproj" />
     <ProjectReference Include="..\Atlas.Shared\Atlas.Shared.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Features\Catalogos\" />
+  </ItemGroup>
 
 </Project>

@@ -3,6 +3,7 @@ using Atlas.Application.Features.Socios.Commands;
 using Atlas.Application.Features.Socios.Queries;
 using Atlas.Shared.Common;
 using Atlas.Shared.Socios;
+using Atlas.Application.Features.Socios.Queries;
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
 namespace Atlas.ApiService.Endpoints;
@@ -30,7 +31,7 @@ public class Socios : EndpointGroupBase
             .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
             .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
 
-        group.MapGet("socio/search", SearchSociosAsync)
+        group.MapGet("search/", SearchSociosAsync)
            .WithSummary("Busca socios por término de búsqueda")
            .Produces<ApiResponseDto<List<SocioSearchDto>>>(StatusCodes.Status200OK)
            .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
@@ -65,11 +66,32 @@ public class Socios : EndpointGroupBase
             .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
 
 
+        group.MapGet("membresia/", GetMembresiasAsync)
+            .WithSummary("Obtiene membresías paginadas y filtradas")
+            .Produces<ApiResponseDto<PagedResultDto<MembresiaListItemDto>>>(StatusCodes.Status200OK)
+            .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
+            .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
+
         group.MapPost("membresia/", CreateMembresiaAsync)
             .WithName("CreateMembresiaAsync")
             .WithSummary("Crea una nueva membresía")
             .Accepts<CreateMembresiaDto>("application/json")
             .Produces(StatusCodes.Status200OK)
+            .Produces<ApiResponseDto>(StatusCodes.Status400BadRequest)
+            .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
+            .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
+
+        group.MapGet("membresia/pendientes/{socioId:guid}", GetMembresiasPendientesAsync)
+            .WithSummary("Obtiene membresías con saldo pendiente de un socio")
+            .Produces<ApiResponseDto<List<MembresiaConSaldoDto>>>(StatusCodes.Status200OK)
+            .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
+            .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
+
+        group.MapPost("pago/", RegistrarPagoAsync)
+            .WithName("RegistrarPago")
+            .WithSummary("Registra el pago de una o varias membresías")
+            .Accepts<RegistrarPagoDto>("application/json")
+            .Produces<ApiResponseDto<Guid>>(StatusCodes.Status200OK)
             .Produces<ApiResponseDto>(StatusCodes.Status400BadRequest)
             .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
             .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
@@ -141,6 +163,25 @@ public class Socios : EndpointGroupBase
         return result.ToCustomMinimalApiResult();
     }
 
+    public async Task<IResult> GetMembresiasAsync(
+        [FromServices] IQueryMediator queryMediator,
+        [FromQuery] string? q = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int size = 10,
+        [FromQuery] string sortColumn = nameof(MembresiaListItemDto.NomPlan),
+        [FromQuery] bool sortDescending = false)
+    {
+        var result = await queryMediator.QueryAsync(new GetMembresiasQuery
+        {
+            SearchText = q,
+            Page = page,
+            PageSize = size,
+            SortColumn = sortColumn,
+            SortDescending = sortDescending
+        });
+        return result.ToCustomMinimalApiResult();
+    }
+
     public async Task<IResult> CreateMembresiaAsync(
        [FromServices] ICommandMediator commandMediator,
        [FromBody] CreateMembresiaDto model)
@@ -149,5 +190,20 @@ public class Socios : EndpointGroupBase
         return result.ToCustomMinimalApiResult();
     }
 
+    public async Task<IResult> GetMembresiasPendientesAsync(
+        [FromServices] IQueryMediator queryMediator,
+        [FromRoute] Guid socioId)
+    {
+        var result = await queryMediator.QueryAsync(new GetMembresiasPendientesBySocioQuery(socioId));
+        return result.ToCustomMinimalApiResult();
+    }
+
+    public async Task<IResult> RegistrarPagoAsync(
+        [FromServices] ICommandMediator commandMediator,
+        [FromBody] RegistrarPagoDto model)
+    {
+        var result = await commandMediator.SendAsync(new PagarMembresiaCommand(model));
+        return result.ToCustomMinimalApiResult();
+    }
 
 }

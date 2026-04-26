@@ -12,6 +12,7 @@ public class GetPlanesQuery : IQuery<Result<PagedResultDto<PlanListItemDto>>>
         nameof(PlanListItemDto.NomPlan),
         nameof(PlanListItemDto.Descripcion),
         nameof(PlanListItemDto.Precio),
+        nameof(PlanListItemDto.NomPeriodicidad),
         nameof(PlanListItemDto.CupoMaximo),
         nameof(PlanListItemDto.Activo),
     ];

@@ -1,0 +1,95 @@
+@using Atlas.Shared.Configuracion
+@using Atlas.Client.Services
+@using Atlas.Shared.Common
+@inject IConfiguracionApi ConfiguracionApi
+
+<MudAutocomplete T="PlanSearchDto"
+                 Label="@Label"
+                 Value="SelectedPlan"
+                 ValueChanged="OnSelectedValueChanged"
+                 SearchFunc="@SearchPlanes"
+                 ToStringFunc="@GetPlanText"
+                 Variant="Variant.Outlined"
+                 Margin="Margin.Dense"
+                 DebounceInterval="300"
+                 MinCharacters="2"
+                 MaxItems="10"
+                 ResetValueOnEmptyText="true"
+                 Required="@Required"
+                 RequiredError="@RequiredError"
+                 Disabled="@Disabled">
+    <ItemTemplate>
+        <MudText>@context.NomPlan</MudText>
+        <MudText Typo="Typo.caption" Class="mud-text-secondary">@context.Precio.ToString("C") — @context.Descripcion</MudText>
+    </ItemTemplate>
+    <NoItemsTemplate>
+        <MudText Class="pa-3">No se encontraron planes</MudText>
+    </NoItemsTemplate>
+</MudAutocomplete>
+
+@code {
+    [Parameter]
+    public string Label { get; set; } = "Buscar Plan";
+
+    [Parameter]
+    public PlanSearchDto? SelectedPlan { get; set; }
+
+    [Parameter]
+    public EventCallback<PlanSearchDto?> SelectedPlanChanged { get; set; }
+
+    [Parameter]
+    public bool Required { get; set; } = false;
+
+    [Parameter]
+    public string RequiredError { get; set; } = "Debe seleccionar un plan";
+
+    [Parameter]
+    public bool Disabled { get; set; } = false;
+
+    [Parameter]
+    public int MaxResults { get; set; } = 10;
+
+    [Parameter]
+    public EventCallback<PlanSearchDto?> OnPlanSelected { get; set; }
+
+    private CancellationTokenSource? _cancellationTokenSource;
+
+    private async Task<IEnumerable<PlanSearchDto>> SearchPlanes(string value, CancellationToken token)
+    {
+        if (string.IsNullOrWhiteSpace(value) || value.Length < 2)
+            return Array.Empty<PlanSearchDto>();
+
+        try
+        {
+            _cancellationTokenSource?.Cancel();
+            _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(token);
+
+            var response = await ConfiguracionApi.SearchPlanesAsync(value, MaxResults, _cancellationTokenSource.Token);
+
+            if (response.Success && response.Data != null)
+                return response.Data;
+
+            return Array.Empty<PlanSearchDto>();
+        }
+        catch (OperationCanceledException)
+        {
+            return Array.Empty<PlanSearchDto>();
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error al buscar planes: {ex.Message}", Severity.Error);
+            return Array.Empty<PlanSearchDto>();
+        }
+    }
+
+    private string GetPlanText(PlanSearchDto? plan) => plan?.NomPlan ?? string.Empty;
+
+    private async Task OnSelectedValueChanged(PlanSearchDto? value)
+    {
+        SelectedPlan = value;
+        await SelectedPlanChanged.InvokeAsync(value);
+
+        if (value != null && OnPlanSelected.HasDelegate)
+            await OnPlanSelected.InvokeAsync(value);
+    }
+}

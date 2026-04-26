@@ -1,0 +1,18 @@
+@attribute [Route(PageRoute.TiposPagoPage)]
+@attribute [AccessPoint(AppMenu.MenuCatalogo, "Tipos de Pago")]
+@using Atlas.Admin.Pages.Catalogos.TipoPago.Components
+
+<PageHeader Title="Tipos de Pago" Icon="@AppMenu.MenuCatalogoIcon">
+    <MudBreadcrumbs Items="_breadcrumbItems"></MudBreadcrumbs>
+</PageHeader>
+
+<TipoPagoList />
+
+@code {
+    private readonly List<BreadcrumbItem> _breadcrumbItems =
+    [
+        new BreadcrumbItem("Inicio", href: "/"),
+        new BreadcrumbItem("Catálogos", href: null, disabled: true),
+        new BreadcrumbItem("Tipos de Pago", href: null, disabled: true)
+    ];
+}

@@ -33,6 +33,7 @@ public static class ServiceCollectionExtensions
         AddAtlasRefitClient<IAccountsApi>(services, apiBaseAddress);
         AddAtlasRefitClient<ISociosApi>(services, apiBaseAddress);
         AddAtlasRefitClient<IConfiguracionApi>(services, apiBaseAddress);
+        AddAtlasRefitClient<ICatalogosApi>(services, apiBaseAddress);
         AddAtlasRefitClient<ISelectListsApi>(services, apiBaseAddress);
 
 

@@ -21,16 +21,20 @@
                           Class="mb-4" />
         </MudItem>
         <MudItem xs="12" sm="12" md="6">
-            <MudSelect T="int" Label="Periodicidad" @bind-Value="Model.PeriodicidadId" Variant="Variant.Outlined" Margin="Margin.Dense">
-                <MudSelectItem T="int" Value="0">[Seleccione]</MudSelectItem>
-                @if (_listPeriodicidad != null)
-                {
+            @if (_listPeriodicidad == null)
+            {
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="40px" />
+            }
+            else
+            {
+                <MudSelect T="int" Label="Periodicidad" @bind-Value="Model.PeriodicidadId" Variant="Variant.Outlined" Margin="Margin.Dense">
+                    <MudSelectItem T="int" Value="0">[Seleccione]</MudSelectItem>
                     @foreach (var item in _listPeriodicidad)
                     {
                         <MudSelectItem T="int" Value="@Convert.ToInt32(item.Value)">@item.Text</MudSelectItem>
                     }
-                }
-            </MudSelect>
+                </MudSelect>
+            }
         </MudItem>
         <MudItem xs="12" sm="6">
             <MudNumericField Label="Precio"

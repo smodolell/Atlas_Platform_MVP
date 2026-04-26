@@ -1,0 +1,30 @@
+@attribute [Route(PageRoute.NewMembresiaPage)]
+@attribute [AccessPoint(AppMenu.MenuSocios, "Nueva Membresía", AccessPointType.Page)]
+@using Atlas.Admin.Pages.Socios.Components
+
+<PageHeader Title="Nueva Membresía" Icon="@Icons.Material.Filled.CardMembership">
+    <MudBreadcrumbs Items="_breadcrumbItems"></MudBreadcrumbs>
+</PageHeader>
+
+<MudPaper Elevation="2" Class="pa-6 mt-4">
+    <CreateMembresiaForm OnSuccess="HandleSuccess" OnCancel="HandleCancel" />
+</MudPaper>
+
+@code {
+    private readonly List<BreadcrumbItem> _breadcrumbItems =
+    [
+        new BreadcrumbItem("Inicio", href: "/"),
+        new BreadcrumbItem("Socios", href: PageRoute.SociosPage),
+        new BreadcrumbItem("Nueva Membresía", href: null, disabled: true)
+    ];
+
+    private void HandleSuccess()
+    {
+        _navManager.NavigateTo(PageRoute.SociosPage);
+    }
+
+    private void HandleCancel()
+    {
+        _navManager.NavigateTo(PageRoute.SociosPage);
+    }
+}

@@ -30,6 +30,12 @@ public class Configuracion : EndpointGroupBase
             .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
             .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
 
+        group.MapGet("plan/search", SearchPlanes)
+            .WithSummary("Busca planes por término de búsqueda")
+            .Produces<ApiResponseDto<List<PlanSearchDto>>>(StatusCodes.Status200OK)
+            .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
+            .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
+
         group.MapPost("plan/", CreatePlan)
             .WithName("CreatePlan")
             .WithSummary("Crea un nuevo plan")
@@ -110,6 +116,19 @@ public class Configuracion : EndpointGroupBase
         [FromRoute] int id)
     {
         var result = await commandMediator.SendAsync(new DeletePlanCommand(id));
+        return result.ToCustomMinimalApiResult();
+    }
+
+    public async Task<IResult> SearchPlanes(
+        [FromServices] IQueryMediator queryMediator,
+        [FromQuery] string? searchTerm = null,
+        [FromQuery] int maxResults = 10)
+    {
+        var result = await queryMediator.QueryAsync(new SearchPlanesQuery
+        {
+            SearchTerm = searchTerm,
+            MaxResults = maxResults
+        });
         return result.ToCustomMinimalApiResult();
     }
 }

@@ -35,6 +35,25 @@ public interface ISociosApi
     Task<ApiResponseDto> DeleteSocio(Guid id);
 
 
+    [Get("/api/socios/membresia/pendientes/{socioId}")]
+    Task<ApiResponseDto<List<MembresiaConSaldoDto>>> GetMembresiasPendientesAsync(
+        Guid socioId,
+        CancellationToken cancellationToken = default);
+
+    [Post("/api/socios/pago/")]
+    Task<ApiResponseDto<Guid>> RegistrarPagoAsync(
+        [Body] RegistrarPagoDto model,
+        CancellationToken cancellationToken = default);
+
+    [Get("/api/socios/membresia/")]
+    Task<ApiResponseDto<PagedResultDto<MembresiaListItemDto>>> GetMembresiasAsync(
+        [Query] string? q = null,
+        [Query] int page = 1,
+        [Query] int size = 10,
+        [Query] string sortColumn = "NomPlan",
+        [Query] bool sortDescending = false,
+        CancellationToken cancellationToken = default);
+
     [Post("/api/socios/membresia/")]
     Task<ApiResponseDto> CreateMembresiaAsync([Body] CreateMembresiaDto model);
 }

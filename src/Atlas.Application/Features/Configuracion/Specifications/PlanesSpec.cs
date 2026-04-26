@@ -15,5 +15,7 @@ public class PlanesSpec : Specification<Plan>
         {
             Query.Where(p => p.PeriodicidadId == periodicidadId.Value);
         }
+
+        Query.Include(p => p.Periodicidad);
     }
 }

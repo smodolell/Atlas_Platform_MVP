@@ -1,0 +1,219 @@
+@using Atlas.Shared.Socios
+@using Atlas.Shared.Configuracion
+@using Atlas.Admin.Shared.Autocomplete
+@inject ISociosApi SociosApi
+
+<MudGrid Spacing="4">
+
+    <!-- Columna izquierda: Socio -->
+    <MudItem xs="12" md="6">
+        <MudStack Spacing="3">
+            <AutocompleteSocio @bind-SelectedSocio="_socioSeleccionado"
+                               Label="Buscar Socio"
+                               Required="true"
+                               RequiredError="Debe seleccionar un socio" />
+
+            @if (_socioSeleccionado != null)
+            {
+                <MudCard Elevation="2">
+                    <MudCardHeader>
+                        <CardHeaderAvatar>
+                            <MudAvatar Color="Color.Primary" Size="Size.Large">
+                                @_socioSeleccionado.Nombre[0]@_socioSeleccionado.Apellido[0]
+                            </MudAvatar>
+                        </CardHeaderAvatar>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">@_socioSeleccionado.Nombre @_socioSeleccionado.Apellido</MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">DNI: @_socioSeleccionado.DNI</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent Class="pt-0">
+                        <MudStack Spacing="2">
+                            @if (!string.IsNullOrEmpty(_socioSeleccionado.Email))
+                            {
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudIcon Icon="@Icons.Material.Filled.Email" Size="Size.Small" Color="Color.Default" />
+                                    <MudText Typo="Typo.body2">@_socioSeleccionado.Email</MudText>
+                                </MudStack>
+                            }
+                            @if (!string.IsNullOrEmpty(_socioSeleccionado.Telefono))
+                            {
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudIcon Icon="@Icons.Material.Filled.Phone" Size="Size.Small" Color="Color.Default" />
+                                    <MudText Typo="Typo.body2">@_socioSeleccionado.Telefono</MudText>
+                                </MudStack>
+                            }
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                <MudIcon Icon="@Icons.Material.Filled.Cake" Size="Size.Small" Color="Color.Default" />
+                                <MudText Typo="Typo.body2">@_socioSeleccionado.FechaNacimiento.ToString("dd/MM/yyyy")</MudText>
+                            </MudStack>
+                        </MudStack>
+                    </MudCardContent>
+                </MudCard>
+            }
+        </MudStack>
+    </MudItem>
+
+    <!-- Columna derecha: Plan -->
+    <MudItem xs="12" md="6">
+        <MudStack Spacing="3">
+            <AutocompletePlan @bind-SelectedPlan="_planSeleccionado"
+                              Label="Buscar Plan"
+                              Required="true"
+                              RequiredError="Debe seleccionar un plan" />
+
+            @if (_planSeleccionado != null)
+            {
+                <MudCard Elevation="2">
+                    <MudCardHeader>
+                        <CardHeaderAvatar>
+                            <MudAvatar Color="Color.Secondary" Size="Size.Large">
+                                <MudIcon Icon="@Icons.Material.Filled.CardMembership" />
+                            </MudAvatar>
+                        </CardHeaderAvatar>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">@_planSeleccionado.NomPlan</MudText>
+                            <MudChip T="string"
+                                     Color="@(_planSeleccionado.Activo ? Color.Success : Color.Error)"
+                                     Size="Size.Small"
+                                     Variant="Variant.Filled">
+                                @(_planSeleccionado.Activo ? "Activo" : "Inactivo")
+                            </MudChip>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent Class="pt-0">
+                        <MudStack Spacing="2">
+                            @if (!string.IsNullOrEmpty(_planSeleccionado.Descripcion))
+                            {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">@_planSeleccionado.Descripcion</MudText>
+                            }
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Size="Size.Small" Color="Color.Success" />
+                                <MudText Typo="Typo.h6" Color="Color.Success">
+                                    @_planSeleccionado.Precio.ToString("C")
+                                </MudText>
+                            </MudStack>
+                        </MudStack>
+                    </MudCardContent>
+                </MudCard>
+            }
+        </MudStack>
+    </MudItem>
+
+    <!-- Datos del formulario -->
+    <MudItem xs="12">
+        <MudDivider />
+    </MudItem>
+
+    <MudItem xs="12" sm="6">
+        <MudDatePicker Label="Fecha de Inicio"
+                       @bind-Date="_model.FechaInicio"
+                       Variant="Variant.Outlined"
+                       Margin="Margin.Dense"
+                       Required="true"
+                       RequiredError="La fecha de inicio es obligatoria"
+                       DateFormat="dd/MM/yyyy" />
+    </MudItem>
+
+    <MudItem xs="12" sm="6">
+        <MudNumericField T="int"
+                         Label="Duración (meses)"
+                         @bind-Value="_model.Duracion"
+                         Variant="Variant.Outlined"
+                         Margin="Margin.Dense"
+                         Min="1"
+                         Max="60" />
+    </MudItem>
+
+    <MudItem xs="12">
+        <MudStack Justify="Justify.FlexEnd" Row="true" Spacing="2">
+            @if (OnCancel.HasDelegate)
+            {
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Secondary"
+                           OnClick="OnCancel"
+                           Disabled="_isSubmitting">
+                    Cancelar
+                </MudButton>
+            }
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       OnClick="HandleSubmit"
+                       Disabled="_isSubmitting || _socioSeleccionado == null || _planSeleccionado == null"
+                       StartIcon="@Icons.Material.Filled.PersonAdd">
+                @if (_isSubmitting)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                    <MudText Class="ms-2">Guardando...</MudText>
+                }
+                else
+                {
+                    <MudText>Agregar Membresía</MudText>
+                }
+            </MudButton>
+        </MudStack>
+    </MudItem>
+
+</MudGrid>
+
+@code {
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    [Parameter]
+    public EventCallback OnSuccess { get; set; }
+
+    private SocioSearchDto? _socioSeleccionado;
+    private PlanSearchDto? _planSeleccionado;
+    private bool _isSubmitting;
+
+    private readonly CreateMembresiaDto _model = new()
+    {
+        FechaInicio = DateTime.Today,
+        Duracion = 1
+    };
+
+    private async Task HandleSubmit()
+    {
+        if (_socioSeleccionado == null || _planSeleccionado == null) return;
+        if (_isSubmitting) return;
+
+        _model.SocioId = _socioSeleccionado.Id;
+        _model.ProductoId = _planSeleccionado.Id;
+
+        _isSubmitting = true;
+        try
+        {
+            var response = await SociosApi.CreateMembresiaAsync(_model);
+            if (response.Success)
+            {
+                _snackbarService.Add("Membresía creada correctamente", Severity.Success);
+                ResetForm();
+                if (OnSuccess.HasDelegate)
+                    await OnSuccess.InvokeAsync();
+            }
+            else
+            {
+                _snackbarService.Add(response.Message ?? "Error al crear la membresía", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error inesperado: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    private void ResetForm()
+    {
+        _socioSeleccionado = null;
+        _planSeleccionado = null;
+        _model.SocioId = Guid.Empty;
+        _model.ProductoId = 0;
+        _model.FechaInicio = DateTime.Today;
+        _model.Duracion = 1;
+    }
+}

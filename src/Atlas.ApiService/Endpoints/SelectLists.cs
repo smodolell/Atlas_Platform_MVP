@@ -33,6 +33,13 @@ public class SelectLists : EndpointGroupBase
             .Produces<ApiResponseDto>(StatusCodes.Status404NotFound)
             .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
 
+        group.MapGet("tipos-pago", GetTipoPagoSelectList)
+            .WithName("GetTipoPagoSelectList")
+            .WithSummary("Obtiene Tipos de Pago activos")
+            .Produces<ApiResponseDto<List<SelectListItemDto>>>(StatusCodes.Status200OK)
+            .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
+            .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
+
     }
 
 
@@ -67,6 +74,14 @@ public class SelectLists : EndpointGroupBase
 
         var result = await queryMediator.QueryAsync(query, cancellationToken);
 
+        return Result.Success(result.Value).ToCustomMinimalApiResult();
+    }
+
+    public async Task<IResult> GetTipoPagoSelectList(
+        [FromServices] IQueryMediator queryMediator,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await queryMediator.QueryAsync(new GetTipoPagoSelectListQuery(), cancellationToken);
         return Result.Success(result.Value).ToCustomMinimalApiResult();
     }
 

@@ -1,0 +1,153 @@
+@using Atlas.Shared.Socios
+@using Atlas.Client.Services
+@inject ISociosApi _sociosApi
+
+<MudDataGrid T="MembresiaListItemDto"
+             Outlined="true"
+             Dense="true"
+             Bordered="true"
+             ServerData="GetTableData"
+             FixedHeader="true"
+             SortMode="SortMode.Single"
+             @ref="_dataGridRef"
+             Loading="_isLoading"
+             Striped="true">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Listado de Membresías</MudText>
+        <MudSpacer />
+        <MudStack Row="true" AlignItems="AlignItems.End" Spacing="1">
+            <MudTextField T="string"
+                          ValueChanged="@(s => OnSearch(s))"
+                          Placeholder="Buscar por socio o plan..."
+                          Adornment="Adornment.Start"
+                          Clearable="true"
+                          Class="flex-grow-0"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          IconSize="Size.Small" />
+        </MudStack>
+        <MudStack Row="true" AlignItems="AlignItems.Start" Spacing="2">
+            <MudTooltip Text="Actualizar">
+                <MudIconButton Icon="@Icons.Material.Outlined.Refresh"
+                               Size="Size.Small"
+                               Color="Color.Info"
+                               OnClick="RefreshData"
+                               Disabled="_isLoading" />
+            </MudTooltip>
+            <MudTooltip Text="Nueva Membresía">
+                <MudButton Variant="Variant.Filled"
+                           Size="Size.Small"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.PersonAdd"
+                           OnClick="AddClick"
+                           Disabled="_isLoading">
+                    Nueva Membresía
+                </MudButton>
+            </MudTooltip>
+        </MudStack>
+    </ToolBarContent>
+
+    <Columns>
+        <PropertyColumn Property="x => x.NomSocio" Title="Socio" StickyLeft="true" />
+        <PropertyColumn Property="x => x.NomPlan" Title="Plan" />
+        <TemplateColumn Title="Fecha Inicio" SortBy="x => x.FechaInicio">
+            <CellTemplate>
+                <MudText Typo="Typo.body2">@context.Item.FechaInicio.ToString("dd/MM/yyyy")</MudText>
+            </CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn Title="Vencimiento" SortBy="x => x.FechaVencimiento">
+            <CellTemplate>
+                <MudText Typo="Typo.body2">@context.Item.FechaVencimiento.ToString("dd/MM/yyyy")</MudText>
+            </CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn Title="Total">
+            <CellTemplate>
+                <MudText Typo="Typo.body2">@context.Item.Total.ToString("C")</MudText>
+            </CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn Title="Saldo">
+            <CellTemplate>
+                <MudText Typo="Typo.body2">@context.Item.TotalSaldo.ToString("C")</MudText>
+            </CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn Title="Estado" StickyRight="true">
+            <CellTemplate>
+                @{
+                    var vigente = context.Item.FechaVencimiento >= DateTime.Today;
+                }
+                <MudChip T="string"
+                         Color="@(vigente ? Color.Success : Color.Error)"
+                         Size="Size.Small"
+                         Variant="Variant.Filled">
+                    @(vigente ? "Vigente" : "Vencida")
+                </MudChip>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+
+    <NoRecordsContent>
+        <MudText>No se encontraron membresías.</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudText>Cargando...</MudText>
+    </LoadingContent>
+</MudDataGrid>
+
+@code {
+    private MudDataGrid<MembresiaListItemDto> _dataGridRef = null!;
+    private bool _isLoading;
+    private string? _searchText;
+
+    private async Task<GridData<MembresiaListItemDto>> GetTableData(GridState<MembresiaListItemDto> gridState, CancellationToken cancellationToken)
+    {
+        try
+        {
+            _isLoading = true;
+            StateHasChanged();
+
+            var pageNumber = gridState.Page + 1;
+            var sortBy = nameof(MembresiaListItemDto.NomPlan);
+            var sortDescending = false;
+
+            var sortDef = gridState.SortDefinitions.FirstOrDefault();
+            if (sortDef != null)
+            {
+                sortBy = sortDef.SortBy;
+                sortDescending = sortDef.Descending;
+            }
+
+            var response = await _sociosApi.GetMembresiasAsync(
+                _searchText, pageNumber, gridState.PageSize,
+                sortBy, sortDescending, cancellationToken);
+
+            return new GridData<MembresiaListItemDto>
+            {
+                TotalItems = response.Data!.TotalCount,
+                Items = response.Data!.Results
+            };
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error al cargar membresías: {ex.Message}", Severity.Error);
+            return new GridData<MembresiaListItemDto> { TotalItems = 0, Items = [] };
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void AddClick() => _navManager.NavigateTo(PageRoute.NewMembresiaPage);
+
+    private async Task OnSearch(string? text)
+    {
+        _searchText = text;
+        await RefreshData();
+    }
+
+    private async Task RefreshData()
+    {
+        if (_dataGridRef != null)
+            await _dataGridRef.ReloadServerData();
+    }
+}

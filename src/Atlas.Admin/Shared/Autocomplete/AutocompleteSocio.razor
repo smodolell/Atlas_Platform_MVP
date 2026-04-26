@@ -5,7 +5,8 @@
 
 <MudAutocomplete T="SocioSearchDto"
                  Label="@Label"
-                 @bind-Value="SelectedSocio"
+                 Value="SelectedSocio"
+                 ValueChanged="OnSelectedValueChanged"
                  SearchFunc="@SearchSocios"
                  ToStringFunc="@GetSocioText"
                  Variant="Variant.Outlined"

@@ -6,6 +6,9 @@ public interface IAtlasDbContext
     DbSet<Plan> Planes { get; }
     DbSet<Periodicidad> Periodicidades { get; }
     DbSet<Membresia> Membresias { get; }
+    DbSet<TipoPago> TiposPago { get; }
+    DbSet<Pago> Pagos { get; }
+    DbSet<MembresiaPago> MembresiaPagos { get; }
     DbSet<Domain.Entities.Application> SYS_Application { get; }
     DbSet<AccessPoint> SYS_AccessPoint { get; }
     DbSet<RolAccessPoint> SYS_RolAccessPoint { get; }

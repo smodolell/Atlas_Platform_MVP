@@ -13,9 +13,16 @@ internal static class PageRoute
     public const string SociosPage = Prefix + "socios";
     public const string NewSocioPage = Prefix + "new_socio";
     public const string DetailSocioPage = Prefix + "detail_socio";
+    public const string MembresiasPage = Prefix + "membresias";
+    public const string NewMembresiaPage = Prefix + "new_membresia";
+    public const string RegistrarPagoPage = Prefix + "registrar_pago";
 
     public const string PlanesPage = Prefix + "planes";
     public const string NewPlanPage = Prefix + "new_plan";
     public const string EditPlanPage = Prefix + "edit_plan";
+
+    public const string TiposPagoPage = Prefix + "tipos_pago";
+    public const string NewTipoPagoPage = Prefix + "new_tipo_pago";
+    public const string EditTipoPagoPage = Prefix + "edit_tipo_pago";
 
 }

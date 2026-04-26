@@ -57,7 +57,7 @@
              Loading="_isLoading"
              Striped="true">
     <ToolBarContent>
-        <MudText Typo="Typo.h6">Listados de Productos</MudText>
+        <MudText Typo="Typo.h6">Listados de Planes</MudText>
         <MudSpacer />
        <MudStack Row="true" AlignItems="AlignItems.End" Spacing="1">
             <MudTextField T="string"
@@ -100,7 +100,18 @@
         <PropertyColumn Property="x => x.NomPlan" Title="Nombre" StickyLeft="true" />
         <PropertyColumn Property="x => x.Descripcion" Title="Descripción" />
         <PropertyColumn Property="x => x.Precio" Title="Precio" />
+        <PropertyColumn Property="x => x.NomPeriodicidad" Title="Periodicidad" />
         <PropertyColumn Property="x => x.CupoMaximo" Title="Cupo Máximo" />
+        <TemplateColumn Title="Activo" SortBy="x => x.Activo">
+            <CellTemplate>
+                <MudChip T="string"
+                         Color="@(context.Item.Activo ? Color.Success : Color.Error)"
+                         Size="Size.Small"
+                         Variant="Variant.Filled">
+                    @(context.Item.Activo ? "Activo" : "Inactivo")
+                </MudChip>
+            </CellTemplate>
+        </TemplateColumn>
         <TemplateColumn Title="Acciones" CellClass="d-flex justify-end" StickyRight="true">
             <CellTemplate>
                 <MudStack Row="true" Justify="Justify.FlexEnd">

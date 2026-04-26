@@ -1,0 +1,249 @@
+@using Atlas.Shared.Socios
+@using Atlas.Shared.Common
+@using Atlas.Admin.Shared.Autocomplete
+@inject ISociosApi SociosApi
+@inject ISelectListsApi SelectListsApi
+
+<MudGrid Spacing="3">
+
+    @* Búsqueda de Socio *@
+    <MudItem xs="12">
+        <AutocompleteSocio @bind-SelectedSocio="_socioSeleccionado"
+                           Label="Buscar Socio"
+                           Required="true"
+                           OnSocioSelected="OnSocioChanged" />
+    </MudItem>
+
+    @* Membresías con saldo *@
+    <MudItem xs="12">
+        @if (_socioSeleccionado == null)
+        {
+            <MudAlert Severity="Severity.Info" Dense="true">
+                Seleccione un socio para ver sus membresías pendientes.
+            </MudAlert>
+        }
+        else if (_cargandoMembresias)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+        }
+        else if (!_membresiasPendientes.Any())
+        {
+            <MudAlert Severity="Severity.Success" Dense="true">
+                Este socio no tiene membresías con saldo pendiente.
+            </MudAlert>
+        }
+        else
+        {
+            <MudTable Items="_membresiasPendientes"
+                      MultiSelection="true"
+                      @bind-SelectedItems="_membresiasSeleccionadas"
+                      Hover="true"
+                      Dense="true"
+                      Outlined="true"
+                      Striped="true">
+                <ToolBarContent>
+                    <MudText Typo="Typo.subtitle1">Membresías con saldo pendiente</MudText>
+                    <MudSpacer />
+                    @if (_membresiasSeleccionadas.Any())
+                    {
+                        <MudChip T="string" Color="Color.Primary" Size="Size.Small">
+                            @_membresiasSeleccionadas.Count seleccionada(s)
+                        </MudChip>
+                    }
+                </ToolBarContent>
+                <HeaderContent>
+                    <MudTh>Plan</MudTh>
+                    <MudTh>Vencimiento</MudTh>
+                    <MudTh Style="text-align:right">Monto Saldo</MudTh>
+                    <MudTh Style="text-align:right">IVA Saldo</MudTh>
+                    <MudTh Style="text-align:right">Total Saldo</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.NomPlan</MudTd>
+                    <MudTd>@context.FechaVencimiento.ToString("dd/MM/yyyy")</MudTd>
+                    <MudTd Style="text-align:right">@context.MontoSaldo.ToString("C")</MudTd>
+                    <MudTd Style="text-align:right">@context.IVASaldo.ToString("C")</MudTd>
+                    <MudTd Style="text-align:right">
+                        <MudText Color="Color.Primary"><strong>@context.TotalSaldo.ToString("C")</strong></MudText>
+                    </MudTd>
+                </RowTemplate>
+                <FooterContent>
+                    <MudTFootRow>
+                        <MudTd colspan="4" Style="text-align:right">
+                            <MudText Typo="Typo.subtitle2">Total a pagar:</MudText>
+                        </MudTd>
+                        <MudTd Style="text-align:right">
+                            <MudText Typo="Typo.h6" Color="Color.Success">
+                                <strong>@TotalSeleccionado.ToString("C")</strong>
+                            </MudText>
+                        </MudTd>
+                    </MudTFootRow>
+                </FooterContent>
+            </MudTable>
+        }
+    </MudItem>
+
+    @* Datos del pago *@
+    @if (_membresiasSeleccionadas.Any())
+    {
+        <MudItem xs="12">
+            <MudDivider />
+        </MudItem>
+
+        <MudItem xs="12" sm="6">
+            @if (_listTipoPago == null)
+            {
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="40px" />
+            }
+            else
+            {
+                <MudSelect T="int"
+                           Label="Tipo de Pago"
+                           @bind-Value="_tipoPagoId"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.Dense"
+                           Required="true">
+                    <MudSelectItem T="int" Value="0">[Seleccione]</MudSelectItem>
+                    @foreach (var item in _listTipoPago)
+                    {
+                        <MudSelectItem T="int" Value="@Convert.ToInt32(item.Value)">@item.Text</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+        </MudItem>
+
+        <MudItem xs="12" sm="6">
+            <MudDatePicker Label="Fecha de Pago"
+                           @bind-Date="_fechaPago"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.Dense"
+                           DateFormat="dd/MM/yyyy"
+                           Required="true" />
+        </MudItem>
+
+        <MudItem xs="12">
+            <MudStack Justify="Justify.FlexEnd" Row="true" Spacing="2">
+                @if (OnCancel.HasDelegate)
+                {
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Secondary"
+                               OnClick="OnCancel"
+                               Disabled="_isSubmitting">
+                        Cancelar
+                    </MudButton>
+                }
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Success"
+                           OnClick="HandleSubmit"
+                           Disabled="_isSubmitting || _tipoPagoId == 0 || _fechaPago == null"
+                           StartIcon="@Icons.Material.Filled.Payments">
+                    @if (_isSubmitting)
+                    {
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                        <MudText Class="ms-2">Procesando...</MudText>
+                    }
+                    else
+                    {
+                        <MudText>Registrar Pago @TotalSeleccionado.ToString("C")</MudText>
+                    }
+                </MudButton>
+            </MudStack>
+        </MudItem>
+    }
+
+</MudGrid>
+
+@code {
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public EventCallback OnSuccess { get; set; }
+
+    private SocioSearchDto? _socioSeleccionado;
+    private List<MembresiaConSaldoDto> _membresiasPendientes = [];
+    private HashSet<MembresiaConSaldoDto> _membresiasSeleccionadas = [];
+    private List<SelectListItemDto>? _listTipoPago;
+    private int _tipoPagoId;
+    private DateTime? _fechaPago = DateTime.Today;
+    private bool _cargandoMembresias;
+    private bool _isSubmitting;
+
+    private decimal TotalSeleccionado => _membresiasSeleccionadas.Sum(m => m.TotalSaldo);
+
+    protected override async Task OnInitializedAsync()
+    {
+        _listTipoPago = (await SelectListsApi.GetTipoPagoSelectListAsync()).Data;
+    }
+
+    private async Task OnSocioChanged(SocioSearchDto socio)
+    {
+        _membresiasPendientes = [];
+        _membresiasSeleccionadas = [];
+
+        _cargandoMembresias = true;
+        StateHasChanged();
+
+        try
+        {
+            var response = await SociosApi.GetMembresiasPendientesAsync(socio.Id);
+            if (response.Success && response.Data != null)
+                _membresiasPendientes = response.Data;
+            else
+                _snackbarService.Add(response.Message ?? "Error al cargar membresías", Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error inesperado: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _cargandoMembresias = false;
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (_socioSeleccionado == null || !_membresiasSeleccionadas.Any()) return;
+        if (_tipoPagoId == 0 || _fechaPago == null) return;
+        if (_isSubmitting) return;
+
+        _isSubmitting = true;
+        try
+        {
+            var dto = new RegistrarPagoDto
+            {
+                TipoPagoId = _tipoPagoId,
+                FechaPago = _fechaPago.Value,
+                MembresiaIds = _membresiasSeleccionadas.Select(m => m.Id).ToList()
+            };
+
+            var response = await SociosApi.RegistrarPagoAsync(dto);
+            if (response.Success)
+            {
+                _snackbarService.Add("Pago registrado correctamente", Severity.Success);
+                ResetForm();
+                if (OnSuccess.HasDelegate)
+                    await OnSuccess.InvokeAsync();
+            }
+            else
+            {
+                _snackbarService.Add(response.Message ?? "Error al registrar el pago", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error inesperado: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    private void ResetForm()
+    {
+        _socioSeleccionado = null;
+        _membresiasPendientes = [];
+        _membresiasSeleccionadas = [];
+        _tipoPagoId = 0;
+        _fechaPago = DateTime.Today;
+    }
+}

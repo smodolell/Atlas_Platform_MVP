@@ -11,6 +11,12 @@ public interface IConfiguracionApi
         [AliasAs("id")] int id,
         CancellationToken cancellationToken = default);
 
+    [Get("/api/configuracion/plan/search")]
+    Task<ApiResponseDto<List<PlanSearchDto>>> SearchPlanesAsync(
+        [Query] string? searchTerm = null,
+        [Query] int maxResults = 10,
+        CancellationToken cancellationToken = default);
+
     [Get("/api/configuracion/plan/")]
     Task<ApiResponseDto<PagedResultDto<PlanListItemDto>>> GetPlanesAsync(
         [Query] string? q = null,

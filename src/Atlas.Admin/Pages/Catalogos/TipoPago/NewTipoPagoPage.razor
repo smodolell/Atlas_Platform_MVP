@@ -1,0 +1,58 @@
+@attribute [Route(PageRoute.NewTipoPagoPage)]
+@attribute [AccessPoint(AppMenu.MenuCatalogo, "Nuevo Tipo de Pago", AccessPointType.Page)]
+@using Atlas.Shared.Catalogos
+@using Atlas.Client.Services
+@using Atlas.Admin.Pages.Catalogos.TipoPago.Components
+@inject ICatalogosApi _catalogosApi
+
+<PageHeader Title="Nuevo Tipo de Pago" Icon="@Icons.Material.Filled.Add">
+    <MudBreadcrumbs Items="_breadcrumbItems"></MudBreadcrumbs>
+</PageHeader>
+
+<MudPaper Elevation="2" Class="pa-4 mt-4">
+    <TipoPagoForm Model="_model"
+                  IsSaving="_isSaving"
+                  OnValidSubmit="HandleSave"
+                  OnCancel="GoBack" />
+</MudPaper>
+
+@code {
+    private readonly List<BreadcrumbItem> _breadcrumbItems =
+    [
+        new BreadcrumbItem("Inicio", href: "/"),
+        new BreadcrumbItem("Tipos de Pago", href: PageRoute.TiposPagoPage),
+        new BreadcrumbItem("Nuevo", href: null, disabled: true)
+    ];
+
+    private TipoPagoEditDto _model = new();
+    private bool _isSaving;
+
+    private async Task HandleSave(TipoPagoEditDto model)
+    {
+        _isSaving = true;
+        try
+        {
+            var response = await _catalogosApi.CreateTipoPagoAsync(model);
+            if (response.IsSuccessStatusCode)
+            {
+                _snackbarService.Add("Tipo de pago creado correctamente", Severity.Success);
+                _navManager.NavigateTo(PageRoute.TiposPagoPage);
+            }
+            else
+            {
+                var errors = response.Error?.Content ?? "Error al crear el tipo de pago";
+                _snackbarService.Add(errors, Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error inesperado: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private void GoBack() => _navManager.NavigateTo(PageRoute.TiposPagoPage);
+}

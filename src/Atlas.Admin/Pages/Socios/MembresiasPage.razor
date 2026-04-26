@@ -1,0 +1,17 @@
+@attribute [Route(PageRoute.MembresiasPage)]
+@attribute [AccessPoint(AppMenu.MenuSocios, "Membresías")]
+@using Atlas.Admin.Pages.Socios.Components
+
+<PageHeader Title="Membresías" Icon="@Icons.Material.Filled.CardMembership">
+    <MudBreadcrumbs Items="_breadcrumbItems"></MudBreadcrumbs>
+</PageHeader>
+
+<MembresiaList />
+
+@code {
+    private readonly List<BreadcrumbItem> _breadcrumbItems =
+    [
+        new BreadcrumbItem("Inicio", href: "/"),
+        new BreadcrumbItem("Membresías", href: null, disabled: true)
+    ];
+}
