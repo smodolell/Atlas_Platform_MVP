@@ -1,66 +1,153 @@
-<h3>SocioList</h3>
-@* 
+@using Atlas.Shared.Socios
+@using Atlas.Client.Services
+@inject ISociosApi _sociosApi
+@inject ISelectListsApi _selectListsApi;
+<MudDataGrid T="SocioListItemDto"
+             Outlined="true"
+             Dense="true"
+             Bordered="true"
+             ServerData="GetTableData"
+             FixedHeader="true"
+             SortMode="SortMode.Single"
+             @ref="_dataGridRef"
+             Loading="_isLoading"
+             Striped="true">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Listados de Socios</MudText>
+        <MudSpacer />
+        <MudStack Row="true" AlignItems="AlignItems.End" Spacing="1">
+            <MudTextField T="string"
+                          ValueChanged="@(s => OnSearch(s))"
+                          Placeholder="Buscar por identificador, nombre o apellido..."
+                          Adornment="Adornment.Start"
+                          Clearable="true"
+                          Class="flex-grow-0"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          IconSize="Size.Small">
+            </MudTextField>
+        @*     <MudIconButton Icon="@Icons.Material.Outlined.FilterAlt"
+                           Class="align-self-end pa-1"
+                           Size="Size.Medium"
+                           OnClick="OnFilterClicked" /> *@
+        </MudStack>
+        <MudStack Row="true" AlignItems="AlignItems.Start" Spacing="2">
+
+          
+            <MudTooltip Text="Actualizar">
+                <MudIconButton Icon="@Icons.Material.Outlined.Refresh"
+                               Size="Size.Small"
+                               Color="Color.Info"
+                               OnClick="RefreshData"
+                               Disabled="_isLoading" />
+            </MudTooltip>
+            <MudTooltip Text="Agregar Cliente">
+                <MudButton Variant="Variant.Filled"
+                           Size="Size.Small"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Outlined.PersonAdd"
+                           OnClick="AddClick"
+                           Disabled="_isLoading">
+                    Nuevo Socio
+                </MudButton>
+            </MudTooltip>
+        </MudStack>
+    </ToolBarContent>
+    <Columns>
+        <PropertyColumn Property="x => x.NombreCompleto" Title="Nombre de Socio" StickyLeft="true" />
+        <PropertyColumn Property="x => x.Email" Title="Email" />
+        <PropertyColumn Property="x => x.Telefono" Title="Teléfono" />
+        <TemplateColumn Title="Acciones" CellClass="d-flex justify-end" StickyRight="true">
+            <CellTemplate>
+                <MudStack Row="true" Justify="Justify.FlexEnd">
+                    <MudTooltip Text="Editar">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                       Color="Color.Primary"
+                                       Size="Size.Small"
+                                       OnClick="@(() => DetailClick(context.Item.Id))" />
+                    </MudTooltip>
+                 
+                </MudStack>
+
+             
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <NoRecordsContent>
+        <MudText>No se encontraron productos.</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudText>Cargando...</MudText>
+    </LoadingContent>
+</MudDataGrid>
+
+
 @code {
 
-}
+    private MudDataGrid<SocioListItemDto> _dataGridRef = null!;
+    private bool _isLoading;
+    private string? _searchText;
+
+
+
+    private async Task<GridData<SocioListItemDto>> GetTableData(GridState<SocioListItemDto> gridState, CancellationToken cancellationToken)
+    {
+        try
+        {
+            _isLoading = true;
+            StateHasChanged();
+
+            var _pageNumber = (gridState.Page + 1);
+            var _sortBy = nameof(SocioListItemDto.Nombre);
+            var _sortDescending = true;
+            var _sortDefinitions = gridState.SortDefinitions.FirstOrDefault();
+            if (_sortDefinitions != null)
+            {
+                _sortBy = _sortDefinitions.SortBy;
+                _sortDescending = _sortDefinitions.Descending;
+            }
+            var paginatedList = await _sociosApi.GetSociosAsync(_searchText,
+                _pageNumber,
+                gridState.PageSize,
+                _sortBy,
+                _sortDescending);
+            return new GridData<SocioListItemDto>()
+            {
+                TotalItems = paginatedList.Data!.TotalCount,
+                Items = paginatedList.Data!.Results
+            };
         }
         catch (Exception ex)
         {
-            _snackbarService.Add($"Error al cargar datos: {ex.Message}", Severity.Error);
-            return new GridData<SocioListItemDto>() { TotalItems = 0, Items = new List<SocioListItemDto>() };
+            _snackbarService.Add($"Error al cargar Socios: {ex.Message}", Severity.Error);
+            return new GridData<SocioListItemDto>() { TotalItems = 0, Items = Enumerable.Empty<SocioListItemDto>() };
         }
         finally
         {
             _isLoading = false;
+            StateHasChanged();
         }
-      
     }
 
-    private async Task AddClick()
+    private void AddClick()
     {
-        var dialog = await _dialogService.ShowAsync<SocioFormDialog>("Nuevo Socio", new DialogParameters(), new DialogOptions
-        {
-            MaxWidth = MaxWidth.Medium,
-            FullWidth = true,
-            CloseButton = true
-        });
-        var result = await dialog.Result;
-        if (!result!.Canceled)
-            await dataGridRef.ReloadServerData();
+        _navManager.NavigateTo(PageRoute.NewSocioPage);
     }
 
-    private async Task EditClick(Guid id)
+    private void DetailClick(Guid id)
     {
-        var parameters = new DialogParameters { { "SocioId", id } };
-        var dialog = await _dialogService.ShowAsync<SocioFormDialog>("Editar Socio", parameters, new DialogOptions
-        {
-            MaxWidth = MaxWidth.Medium,
-            FullWidth = true,
-            CloseButton = true
-        });
-        var result = await dialog.Result;
-        if (!result!.Canceled)
-            await dataGridRef.ReloadServerData();
+        _navManager.NavigateTo($"{PageRoute.DetailSocioPage}/{id}");
     }
 
-
-   
-
-    private async Task DeleteClick(SocioListItemDto item)
+    private async Task OnSearch(string? text)
     {
-        await _dialogService.ShowConfirmDialog($"¿Desea eliminar el Socio {item.Nombre} {item.Apellido}?", "Eliminar", async (e) =>
+        _searchText = text;
+        await RefreshData();
+    }
+    private async Task RefreshData()
+    {
+        if (_dataGridRef != null)
         {
-            try
-            {
-                var result = await _sociosApi.DeleteSocio(item.Id);
-                await dataGridRef.ReloadServerData();
-                _snackbarService.Add(result.Message, MudBlazor.Severity.Success);
-            }
-            catch (Exception ex)
-            {
-                _snackbarService.Add(ex.Message, MudBlazor.Severity.Error);
-            }
-        });
+            await _dataGridRef.ReloadServerData();
+        }
     }
 }
- *@

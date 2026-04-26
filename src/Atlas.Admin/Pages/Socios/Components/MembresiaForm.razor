@@ -1,0 +1,98 @@
+﻿@using Atlas.Shared.Socios
+@using Atlas.Shared.Configuracion
+@inject ISociosApi _sociosApi;
+@inject ISelectListsApi _selectListsApi;
+<h3>@SocioId</h3>
+
+<EditForm Model="Model" OnValidSubmit="HandleSubmit">
+    <MudGrid>
+        <MudItem xs="12" sm="6">
+            <MudSelect T="int" Label="Plan" @bind-Value="Model.ProductoId" Variant="Variant.Outlined" Margin="Margin.Dense">
+                <MudSelectItem T="int" Value="0">[Seleccione]</MudSelectItem>
+                @if (_listPlan != null)
+                {
+                    @foreach (var item in _listPlan)
+                    {
+                        <MudSelectItem T="int" Value="@Convert.ToInt32(item.Value)">@item.Text</MudSelectItem>
+                    }
+                }
+            </MudSelect>
+
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudDatePicker Label="Fecha de Inicio"
+                           @bind-Date="Model.FechaInicio"
+                           For="@(() => Model.FechaInicio)"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.Dense"
+                           Class="mb-4" />
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudNumericField Label="Duración"
+                             @bind-Value="Model.Duracion"
+                             For="@(() => Model.Duracion)"
+                             Variant="Variant.Outlined"
+                             Margin="Margin.Dense" />
+        </MudItem>
+        <MudItem xs="12">
+            <MudStack Justify="Justify.FlexEnd" Spacing="2" Row="true">
+      
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           ButtonType="ButtonType.Submit"
+                           Disabled="_isSubmitting"
+                           StartIcon="@Icons.Material.Filled.Save"
+                           EndIcon="@(_isSubmitting ? Icons.Material.Filled.HourglassEmpty : null)">
+                    @(_isSubmitting ? "Creado..." : "Crear Membresía")
+                </MudButton>
+            </MudStack>
+        </MudItem>
+    </MudGrid>
+
+</EditForm>
+
+@code {
+
+    [Parameter]
+    public Guid SocioId { get; set; }
+    private CreateMembresiaDto Model { get; set; } = new CreateMembresiaDto();
+
+    private List<SelectListItemDto>? _listPlan;
+    private bool _isSubmitting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Model.SocioId = SocioId;
+
+        if (_listPlan == null)
+        {
+            _listPlan = (await _selectListsApi.GetPlanSelectListAsync()).Data!;
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (_isSubmitting || Model == null) return;
+        await CreateMembresiaAsync();
+    }
+
+    private async Task CreateMembresiaAsync()
+    {
+        if (Model == null) return;
+        _isSubmitting = true;
+
+        try
+        {
+            var result = await _sociosApi.CreateMembresiaAsync(Model);
+            _snackbarService.Add(result.Message ?? "Cliente actualizado exitosamente", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error inesperado: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+}

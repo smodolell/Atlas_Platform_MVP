@@ -1,0 +1,129 @@
+﻿@using Atlas.Shared.Socios
+@using Atlas.Shared.Configuracion
+@inject ISelectListsApi _selectListsApi;
+<FormSection Title="Información del Socio">
+    <EditForm EditContext="_editContext" OnValidSubmit="HandleSubmit" autocomplete="off">
+        <FluentValidator />
+        <MudGrid>
+            <MudItem xs="12" sm="6">
+                <MudTextField Label="Nombre"
+                              @bind-Value="Model.Nombre"
+                              For="@(() => Model.Nombre)"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Class="mb-4" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField Label="Apellido"
+                              @bind-Value="Model.Apellido"
+                              For="@(() => Model.Apellido)"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Class="mb-4" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField Label="DNI"
+                              @bind-Value="Model.DNI"
+                              For="@(() => Model.DNI)"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Class="mb-4" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudDatePicker Label="Fecha de Nacimiento"
+                               @bind-Date="Model.FechaNacimiento"
+                               For="@(() => Model.FechaNacimiento)"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Class="mb-4" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField Label="Email"
+                              @bind-Value="Model.Email"
+                              For="@(() => Model.Email)"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Class="mb-4"
+                              InputType="InputType.Email" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField Label="Teléfono"
+                              @bind-Value="Model.Telefono"
+                              For="@(() => Model.Telefono)"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Class="mb-4" />
+            </MudItem>
+        </MudGrid>
+    
+        <div class="mt-4">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" ButtonType="ButtonType.Submit" Class="mr-2" Disabled="IsSaving">
+                @if (IsSaving)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                    <MudText Class="ms-2">Guardando...</MudText>
+                }
+                else
+                {
+                    <MudText>Guardar</MudText>
+                }
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="OnCancel">Cancelar</MudButton>
+        </div>
+    </EditForm>
+</FormSection>
+
+
+@code {
+    [Parameter]
+    public SocioEditDto Model { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<SocioEditDto> OnValidSubmit { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    [Parameter]
+    public bool IsSaving { get; set; }
+
+    private EditContext? _editContext;
+    private ValidationMessageStore? _messageStore;
+
+    protected override void OnInitialized()
+    {
+        InitializeEditContext();
+    }
+    
+    protected override void OnParametersSet()
+    {
+        if (_editContext != null && _editContext.Model != Model)
+        {
+            InitializeEditContext();
+        }
+    }
+
+    private void InitializeEditContext()
+    {
+        _editContext = new EditContext(Model);
+        _messageStore = new ValidationMessageStore(_editContext);
+        _editContext.OnFieldChanged += (s, e) => _messageStore!.Clear(e.FieldIdentifier);
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (OnValidSubmit.HasDelegate)
+        {
+            _messageStore?.Clear();
+            await OnValidSubmit.InvokeAsync(Model);
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_editContext != null)
+        {
+            _editContext.OnFieldChanged -= (s, e) => _messageStore!.Clear(e.FieldIdentifier);
+        }
+    }
+}

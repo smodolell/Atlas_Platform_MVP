@@ -23,6 +23,15 @@ public class SelectLists : EndpointGroupBase
             .Produces<ApiResponseDto>(StatusCodes.Status404NotFound)
             .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
 
+       group.MapGet("planes", GetPlanSelectList)
+            .WithName("GetPlanSelectList")
+            .WithSummary("Obtiene Planes")
+            .WithDescription("Retorna una lista de los Planes")
+            .Produces<ApiResponseDto<List<SelectListItemDto>>>(StatusCodes.Status200OK)
+            .Produces<ApiResponseDto>(StatusCodes.Status400BadRequest)
+            .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
+            .Produces<ApiResponseDto>(StatusCodes.Status404NotFound)
+            .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
 
     }
 
@@ -44,5 +53,21 @@ public class SelectLists : EndpointGroupBase
         return Result.Success(result.Value).ToCustomMinimalApiResult();
     }
 
-  
+    public async Task<IResult> GetPlanSelectList(
+  [FromServices] IQueryMediator queryMediator,
+  [FromQuery] string? searchTerm = null,
+  [FromQuery] int? maxResults = null,
+  CancellationToken cancellationToken = default)
+    {
+        var query = new GetPlanSelectListQuery
+        {
+            SearchTerm = searchTerm,
+            MaxResults = maxResults
+        };
+
+        var result = await queryMediator.QueryAsync(query, cancellationToken);
+
+        return Result.Success(result.Value).ToCustomMinimalApiResult();
+    }
+
 }

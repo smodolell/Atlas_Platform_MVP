@@ -1,0 +1,36 @@
+﻿@attribute [Route(PageRoute.DetailSocioPage + "/{SocioId:guid}")]
+@attribute [AccessPoint(AppMenu.MenuSocios, "Detalle Socio", AccessPointType.Page)]
+@using Atlas.Shared.Configuracion
+@using Atlas.Client.Services
+@using Atlas.Admin.Pages.Socios.Components
+
+<PageHeader Title="Detalle Socio" Icon="@Icons.Material.Filled.Person">
+    <MudBreadcrumbs Items="_breadcrumbItems"></MudBreadcrumbs>
+</PageHeader>
+<MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" TabPanelsClass="pa-6">
+    <MudTabPanel Text="Tab One">
+        <MudText>Content One</MudText>
+    </MudTabPanel>
+    <MudTabPanel Text="Membresías">
+        <MembresiaForm SocioId="SocioId"></MembresiaForm>
+    </MudTabPanel>
+    <MudTabPanel Text="Tab Three">
+        <MudText>Content Three</MudText>
+    </MudTabPanel>
+    <MudTabPanel Text="Tab Disabled" Disabled="true">
+        <MudText>Content Disabled</MudText>
+    </MudTabPanel>
+</MudTabs>
+
+@code {
+
+    [Parameter]
+    public Guid SocioId { get; set; }
+
+    private readonly List<BreadcrumbItem> _breadcrumbItems = new()
+{
+        new BreadcrumbItem("Inicio", href: "/"),
+        new BreadcrumbItem("Socios", href: PageRoute.SociosPage),
+        new BreadcrumbItem("Detalle Socio", href: null, disabled: true)
+    };
+}

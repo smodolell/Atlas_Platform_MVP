@@ -10,4 +10,10 @@ public interface ISelectListsApi
         [Query] string? searchTerm = null,
         [Query] int? maxResults = null,
         CancellationToken cancellationToken = default);
+
+    [Get("/api/select-lists/planes")]
+    Task<ApiResponseDto<List<SelectListItemDto>>> GetPlanSelectListAsync(
+    [Query] string? searchTerm = null,
+    [Query] int? maxResults = null,
+    CancellationToken cancellationToken = default);
 }

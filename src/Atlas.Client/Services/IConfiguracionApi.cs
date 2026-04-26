@@ -6,34 +6,34 @@ namespace Atlas.Client.Services;
 
 public interface IConfiguracionApi
 {
-    [Get("/api/configuracion/producto/{id}")]
-    Task<IApiResponse<ApiResponseDto<ProductoEditDto>>> GetProductoByIdAsync(
+    [Get("/api/configuracion/plan/{id}")]
+    Task<IApiResponse<ApiResponseDto<PlanEditDto>>> GetPlanByIdAsync(
         [AliasAs("id")] int id,
         CancellationToken cancellationToken = default);
 
-    [Get("/api/configuracion/producto/")]
-    Task<ApiResponseDto<PagedResultDto<ProductoListItemDto>>> GetProductosAsync(
+    [Get("/api/configuracion/plan/")]
+    Task<ApiResponseDto<PagedResultDto<PlanListItemDto>>> GetPlanesAsync(
         [Query] string? q = null,
         [Query] int page = 1,
         [Query] int size = 10,
-        [Query] string sortColumn = "NomProducto",
+        [Query] string sortColumn = "NomPlan",
         [Query] bool sortDescending = false,
         [Query] int? periodicidadId = null ,
         CancellationToken cancellationToken = default);
 
-    [Post("/api/configuracion/producto/")]
-    Task<IApiResponse<ApiResponseDto<Guid>>> CreateProductoAsync(
-        [Body] ProductoEditDto model,
+    [Post("/api/configuracion/plan/")]
+    Task<IApiResponse<ApiResponseDto<Guid>>> CreatePlanAsync(
+        [Body] PlanEditDto model,
         CancellationToken cancellationToken = default);
 
-    [Put("/api/configuracion/producto/{id}")]
-    Task<IApiResponse<ApiResponseDto>> UpdateProductoAsync(
+    [Put("/api/configuracion/plan/{id}")]
+    Task<IApiResponse<ApiResponseDto>> UpdatePlanAsync(
         [AliasAs("id")] int id,
-        [Body] ProductoEditDto model,
+        [Body] PlanEditDto model,
         CancellationToken cancellationToken = default);
 
-    [Delete("/api/configuracion/producto/{id}")]
-    Task<IApiResponse<ApiResponseDto>> DeleteProductoAsync(
+    [Delete("/api/configuracion/plan/{id}")]
+    Task<IApiResponse<ApiResponseDto>> DeletePlanAsync(
         [AliasAs("id")] int id,
         CancellationToken cancellationToken = default);
 }

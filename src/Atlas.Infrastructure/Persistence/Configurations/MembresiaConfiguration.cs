@@ -22,7 +22,7 @@ public class MembresiaConfiguration : IEntityTypeConfiguration<Membresia>
         builder.Property(m => m.SocioId)
             .IsRequired();
 
-        builder.Property(m => m.ProductoId)
+        builder.Property(m => m.PlanId)
             .IsRequired();
 
         // Configurar propiedades de montos con precisión decimal
@@ -82,16 +82,16 @@ public class MembresiaConfiguration : IEntityTypeConfiguration<Membresia>
             .HasForeignKey(m => m.SocioId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(m => m.Producto)
+        builder.HasOne(m => m.Plan)
             .WithMany()
-            .HasForeignKey(m => m.ProductoId)
+            .HasForeignKey(m => m.PlanId)
             .OnDelete(DeleteBehavior.Restrict);
 
         // Índices
         builder.HasIndex(m => m.SocioId)
             .HasDatabaseName("IX_Membresias_SocioId");
 
-        builder.HasIndex(m => m.ProductoId)
+        builder.HasIndex(m => m.PlanId)
             .HasDatabaseName("IX_Membresias_ProductoId");
 
         builder.HasIndex(m => m.FechaVencimiento)

@@ -1,12 +1,11 @@
-﻿using Atlas.Domain.Entities;
-
-namespace Atlas.Application.Common.Interfaces;
+﻿namespace Atlas.Application.Common.Interfaces;
 
 public interface IAtlasDbContext
 {
     DbSet<Socio> Socios { get; }
-    DbSet<Producto> Productos { get; }
+    DbSet<Plan> Planes { get; }
     DbSet<Periodicidad> Periodicidades { get; }
+    DbSet<Membresia> Membresias { get; }
     DbSet<Domain.Entities.Application> SYS_Application { get; }
     DbSet<AccessPoint> SYS_AccessPoint { get; }
     DbSet<RolAccessPoint> SYS_RolAccessPoint { get; }

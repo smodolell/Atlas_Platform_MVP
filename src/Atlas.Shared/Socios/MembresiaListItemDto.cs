@@ -1,10 +1,13 @@
-﻿namespace Atlas.Domain.Entities;
+﻿namespace Atlas.Shared.Socios;
 
-public class Membresia
+public class MembresiaListItemDto
 {
     public Guid Id { get; set; }
     public Guid SocioId { get; set; }
-    public int PlanId { get; set; }
+    public int ProductoId { get; set; }
+
+    public string NomPlan { get; set; } = "";
+    public string NomSocio { get; set; } = "";
     public decimal Monto { get; set; }
     public decimal IVA { get; set; }
     public decimal Total { get; set; }
@@ -19,9 +22,4 @@ public class Membresia
     public DateTime FechaVencimiento { get; set; }
     public DateTime FechaFinalizacion { get; set; }
     public int DiasGracia { get; set; }
-
-    public Socio Socio { get; set; } = null!;
-    public Plan Plan { get; set; } = null!;
-
-    public ICollection<MembresiaPago> MembresiaPagos { get; set; } = new HashSet<MembresiaPago>();
 }

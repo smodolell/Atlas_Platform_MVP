@@ -1,4 +1,5 @@
 ﻿using Atlas.Domain.Entities;
+using Atlas.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -26,6 +27,14 @@ public class PeriodicidadConfiguration : IEntityTypeConfiguration<Periodicidad>
             .HasColumnName("NomPeriodicidad")
             .HasColumnType("nvarchar(50)");
 
+        builder.Property(p => p.Unidad)
+           .IsRequired()
+           .HasColumnName("Unidad");
+
+        builder.Property(p => p.Valor)
+            .IsRequired()
+            .HasColumnName("Valor");
+
         builder.Property(p => p.Activa)
             .IsRequired()
             .HasDefaultValue(true)
@@ -40,15 +49,16 @@ public class PeriodicidadConfiguration : IEntityTypeConfiguration<Periodicidad>
             .HasDatabaseName("IX_Periodicidades_Activa");
 
         // Relación con Producto (uno a muchos)
-        builder.HasMany(p => p.Productos)
+        builder.HasMany(p => p.Planes)
             .WithOne(prod => prod.Periodicidad)
             .HasForeignKey(prod => prod.PeriodicidadId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasData(
-           new Periodicidad { Id = 1, NomPeriodicidad = "Diaria", Activa = true },
-           new Periodicidad { Id = 2, NomPeriodicidad = "Semanal", Activa = true },
-           new Periodicidad { Id = 3, NomPeriodicidad = "Mensual", Activa = true }
+           new Periodicidad { Id = 1, NomPeriodicidad = "Diaria", Unidad = UnidadTiempo.Dias, Valor = 1, Activa = true },
+           new Periodicidad { Id = 2, NomPeriodicidad = "Semanal", Unidad = UnidadTiempo.Dias, Valor = 7, Activa = true },
+           new Periodicidad { Id = 3, NomPeriodicidad = "Quincenal", Unidad = UnidadTiempo.Dias, Valor = 15, Activa = true },
+           new Periodicidad { Id = 4, NomPeriodicidad = "Mensual", Unidad = UnidadTiempo.Meses, Valor = 1, Activa = true }
        );
     }
 }

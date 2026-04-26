@@ -17,5 +17,8 @@
     <ProjectReference Include="..\Atlas.Application\Atlas.Application.csproj" />
     <ProjectReference Include="..\Atlas.Domain\Atlas.Domain.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Migrations\" />
+  </ItemGroup>
 
 </Project>

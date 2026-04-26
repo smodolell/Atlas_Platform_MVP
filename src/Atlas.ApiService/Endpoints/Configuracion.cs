@@ -16,67 +16,67 @@ public class Configuracion : EndpointGroupBase
         var group = groupBuilder.MapGroup("/")
           .WithTags("Configuración");
 
-        group.MapGet("producto/{id}", GetProductoById)
-            .WithName("GetProductoById")
-            .WithSummary("Obtiene un producto por ID")
-            .Produces<ApiResponseDto<ProductoEditDto>>(StatusCodes.Status200OK)
+        group.MapGet("plan/{id}", GetPlanById)
+            .WithName("GetPlanById")
+            .WithSummary("Obtiene un plan por ID")
+            .Produces<ApiResponseDto<PlanEditDto>>(StatusCodes.Status200OK)
             .Produces<ApiResponseDto>(StatusCodes.Status404NotFound)
             .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
             .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
 
-        group.MapGet("producto/", GetProductos)
-            .WithSummary("Obtiene productos paginados y filtrados")
-            .Produces<ApiResponseDto<PagedResultDto<ProductoListItemDto>>>(StatusCodes.Status200OK)
+        group.MapGet("plan/", GetPlanes)
+            .WithSummary("Obtiene planes paginados y filtrados")
+            .Produces<ApiResponseDto<PagedResultDto<PlanListItemDto>>>(StatusCodes.Status200OK)
             .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
             .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
 
-        group.MapPost("producto/", CreateProducto)
-            .WithName("CreateProducto")
-            .WithSummary("Crea un nuevo producto")
-            .Accepts<ProductoEditDto>("application/json")
+        group.MapPost("plan/", CreatePlan)
+            .WithName("CreatePlan")
+            .WithSummary("Crea un nuevo plan")
+            .Accepts<PlanEditDto>("application/json")
             .Produces(StatusCodes.Status200OK)
             .Produces<ApiResponseDto>(StatusCodes.Status400BadRequest)
             .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
             .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
 
-        group.MapPut("producto/{id}", UpdateProducto)
-            .WithName("UpdateProducto")
-            .WithSummary("Actualiza un producto")
-            .Accepts<ProductoEditDto>("application/json")
+        group.MapPut("plan/{id}", UpdatePlan)
+            .WithName("UpdatePlan")
+            .WithSummary("Actualiza un plan")
+            .Accepts<PlanEditDto>("application/json")
             .Produces(StatusCodes.Status200OK)
             .Produces<ApiResponseDto>(StatusCodes.Status404NotFound)
             .Produces<ApiResponseDto>(StatusCodes.Status400BadRequest)
             .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
             .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
 
-        group.MapDelete("producto/{id}", DeleteProducto)
-            .WithName("DeleteProducto")
-            .WithSummary("Elimina un producto")
+        group.MapDelete("plan/{id}", DeletePlan)
+            .WithName("DeletePlan")
+            .WithSummary("Elimina un plan")
             .Produces(StatusCodes.Status200OK)
             .Produces<ApiResponseDto>(StatusCodes.Status404NotFound)
             .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
             .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
     }
 
-    public async Task<IResult> GetProductoById(
+    public async Task<IResult> GetPlanById(
         [FromServices] IQueryMediator queryMediator,
         [FromRoute] int id)
     {
-        var result = await queryMediator.QueryAsync(new GetProductoByIdQuery { Id = id });
+        var result = await queryMediator.QueryAsync(new GetPlanByIdQuery(id));
         return result.ToCustomMinimalApiResult();
     }
 
-    public async Task<IResult> GetProductos(
+    public async Task<IResult> GetPlanes(
         [FromServices] IQueryMediator queryMediator,
         [FromQuery] string? q = null,
         [FromQuery] int page = 1,
         [FromQuery] int size = 10,
-        [FromQuery] string sortColumn = nameof(ProductoListItemDto.NomProducto),
+        [FromQuery] string sortColumn = nameof(PlanListItemDto.NomPlan),
         [FromQuery] bool sortDescending = false,
         [FromQuery] int? periodicidadId = null
         )
     {
-        var result = await queryMediator.QueryAsync(new GetProductosQuery
+        var result = await queryMediator.QueryAsync(new GetPlanesQuery
         {
             SearchText = q,
             Page = page,
@@ -88,28 +88,28 @@ public class Configuracion : EndpointGroupBase
         return result.ToCustomMinimalApiResult();
     }
 
-    public async Task<IResult> CreateProducto(
+    public async Task<IResult> CreatePlan(
         [FromServices] ICommandMediator commandMediator,
-        [FromBody] ProductoEditDto model)
+        [FromBody] PlanEditDto model)
     {
-        var result = await commandMediator.SendAsync(new CreateProductoCommand(model));
+        var result = await commandMediator.SendAsync(new CreatePlanCommand(model));
         return result.ToCustomMinimalApiResult();
     }
 
-    public async Task<IResult> UpdateProducto(
+    public async Task<IResult> UpdatePlan(
         [FromServices] ICommandMediator commandMediator,
         [FromRoute] int id,
-        [FromBody] ProductoEditDto model)
+        [FromBody] PlanEditDto model)
     {
-        var result = await commandMediator.SendAsync(new UpdateProductoCommand { Id = id, Model = model });
+        var result = await commandMediator.SendAsync(new UpdatePlanCommand { Id = id, Model = model });
         return result.ToCustomMinimalApiResult();
     }
 
-    public async Task<IResult> DeleteProducto(
+    public async Task<IResult> DeletePlan(
         [FromServices] ICommandMediator commandMediator,
         [FromRoute] int id)
     {
-        var result = await commandMediator.SendAsync(new DeleteProductoCommand(id));
+        var result = await commandMediator.SendAsync(new DeletePlanCommand(id));
         return result.ToCustomMinimalApiResult();
     }
 }

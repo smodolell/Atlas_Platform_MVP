@@ -5,6 +5,7 @@ global using Ardalis.Specification.EntityFrameworkCore;
 global using FluentValidation;
 global using LiteBus.Commands.Abstractions;
 global using LiteBus.Queries.Abstractions;
+global using Mapster;
 global using MapsterMapper;
 global using Microsoft.EntityFrameworkCore;
 global using LinqKit;

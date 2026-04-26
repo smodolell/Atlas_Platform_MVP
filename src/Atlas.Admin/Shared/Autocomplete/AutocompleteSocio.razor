@@ -1,0 +1,113 @@
+﻿@using Atlas.Shared.Socios
+@using Atlas.Client.Services
+@using Atlas.Shared.Common
+@inject ISociosApi SociosApi
+
+<MudAutocomplete T="SocioSearchDto"
+                 Label="@Label"
+                 @bind-Value="SelectedSocio"
+                 SearchFunc="@SearchSocios"
+                 ToStringFunc="@GetSocioText"
+                 Variant="Variant.Outlined"
+                 Margin="Margin.Dense"
+                 DebounceInterval="300"
+                 MinCharacters="2"
+                 MaxItems="10"
+                 ResetValueOnEmptyText="true"
+                 Required="@Required"
+                 RequiredError="@RequiredError"
+                 Disabled="@Disabled">
+    <ItemTemplate>
+        <MudText>
+            @context.Nombre
+        </MudText>
+    </ItemTemplate>
+    <NoItemsTemplate>
+        <MudText Class="pa-3">No se encontraron socios</MudText>
+    </NoItemsTemplate>
+</MudAutocomplete>
+
+@code {
+    [Parameter]
+    public string Label { get; set; } = "Buscar Socio";
+
+    [Parameter]
+    public SocioSearchDto? SelectedSocio { get; set; }
+
+    [Parameter]
+    public EventCallback<SocioSearchDto?> SelectedSocioChanged { get; set; }
+
+    [Parameter]
+    public bool Required { get; set; } = false;
+
+    [Parameter]
+    public string RequiredError { get; set; } = "Debe seleccionar un socio";
+
+    [Parameter]
+    public bool Disabled { get; set; } = false;
+
+    [Parameter]
+    public int MaxResults { get; set; } = 10;
+
+    [Parameter]
+    public EventCallback<SocioSearchDto> OnSocioSelected { get; set; }
+
+    private List<SocioSearchDto> _searchResults = new();
+    private CancellationTokenSource? _cancellationTokenSource;
+
+    private async Task<IEnumerable<SocioSearchDto>> SearchSocios(string value, CancellationToken token)
+    {
+        if (string.IsNullOrWhiteSpace(value) || value.Length < 2)
+            return Array.Empty<SocioSearchDto>();
+
+        try
+        {
+            // Cancelar búsqueda anterior
+            _cancellationTokenSource?.Cancel();
+            _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(token);
+            
+            var response = await SociosApi.SearchSociosAsync(value, MaxResults, _cancellationTokenSource.Token);
+            
+            if (response.Success && response.Data != null)
+            {
+                _searchResults = response.Data;
+                return _searchResults;
+
+            }
+            
+            return Array.Empty<SocioSearchDto>();
+        }
+        catch (OperationCanceledException)
+        {
+            return Array.Empty<SocioSearchDto>();
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error al buscar socios: {ex.Message}", Severity.Error);
+            return Array.Empty<SocioSearchDto>();
+        }
+    }
+
+    private string GetSocioText(SocioSearchDto? socio)
+    {
+        return socio?.Nombre ?? string.Empty;
+    }
+
+    private async Task OnSelectedValueChanged(SocioSearchDto? value)
+    {
+        SelectedSocio = value;
+        await SelectedSocioChanged.InvokeAsync(value);
+        
+        if (value != null && OnSocioSelected.HasDelegate)
+        {
+            try
+            {
+                await OnSocioSelected.InvokeAsync(value);
+            }
+            catch (Exception ex)
+            {
+                _snackbarService.Add($"Error al cargar socio: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+}

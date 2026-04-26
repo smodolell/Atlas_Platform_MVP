@@ -1,7 +1,7 @@
 using Atlas.ApiService.Infrastructure;
-using Atlas.Shared.Common;
 using Atlas.Application.Features.Socios.Commands;
 using Atlas.Application.Features.Socios.Queries;
+using Atlas.Shared.Common;
 using Atlas.Shared.Socios;
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
@@ -16,7 +16,7 @@ public class Socios : EndpointGroupBase
         var group = groupBuilder.MapGroup("/")
           .WithTags("Socios");
 
-        group.MapGet("socio/{id}", GetSocioById)
+        group.MapGet("socio/{id}", GetSocioByIdAsync)
             .WithName("GetSocioById")
             .WithSummary("Obtiene un socio por ID")
             .Produces<ApiResponseDto<SocioEditDto>>(StatusCodes.Status200OK)
@@ -24,13 +24,19 @@ public class Socios : EndpointGroupBase
             .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
             .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
 
-        group.MapGet("socio/", GetSocios)
+        group.MapGet("socio/", GetSociosAsync)
             .WithSummary("Obtiene socios paginados y filtrados")
             .Produces<ApiResponseDto<PagedResultDto<SocioListItemDto>>>(StatusCodes.Status200OK)
             .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
             .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
 
-        group.MapPost("socio/", CreateSocio)
+        group.MapGet("socio/search", SearchSociosAsync)
+           .WithSummary("Busca socios por término de búsqueda")
+           .Produces<ApiResponseDto<List<SocioSearchDto>>>(StatusCodes.Status200OK)
+           .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
+           .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
+
+        group.MapPost("socio/", CreateSocioAsync)
             .WithName("CreateSocio")
             .WithSummary("Crea un nuevo socio")
             .Accepts<SocioEditDto>("application/json")
@@ -39,7 +45,7 @@ public class Socios : EndpointGroupBase
             .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
             .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
 
-        group.MapPut("socio/{id}", UpdateSocio)
+        group.MapPut("socio/{id}", UpdateSocioAsync)
             .WithName("UpdateSocio")
             .WithSummary("Actualiza un socio")
             .Accepts<SocioEditDto>("application/json")
@@ -50,24 +56,48 @@ public class Socios : EndpointGroupBase
             .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
 
 
-        group.MapDelete("socio/{id}", DeleteSocio)
-     .WithName("DeleteSocio")
-     .WithSummary("Elimina un socio")
-     .Produces(StatusCodes.Status200OK)
-     .Produces<ApiResponseDto>(StatusCodes.Status404NotFound)
-     .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
-     .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
+        group.MapDelete("socio/{id}", DeleteSocioAsync)
+            .WithName("DeleteSocioAsync")
+            .WithSummary("Elimina un socio")
+            .Produces(StatusCodes.Status200OK)
+            .Produces<ApiResponseDto>(StatusCodes.Status404NotFound)
+            .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
+            .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
+
+
+        group.MapPost("membresia/", CreateMembresiaAsync)
+            .WithName("CreateMembresiaAsync")
+            .WithSummary("Crea una nueva membresía")
+            .Accepts<CreateMembresiaDto>("application/json")
+            .Produces(StatusCodes.Status200OK)
+            .Produces<ApiResponseDto>(StatusCodes.Status400BadRequest)
+            .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
+            .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
+
     }
 
-    public async Task<IResult> GetSocioById(
+    public async Task<IResult> GetSocioByIdAsync(
         [FromServices] IQueryMediator queryMediator,
         [FromRoute] Guid id)
     {
         var result = await queryMediator.QueryAsync(new GetSocioByIdQuery { Id = id });
         return result.ToCustomMinimalApiResult();
     }
-
-    public async Task<IResult> GetSocios(
+    public async Task<IResult> SearchSociosAsync(
+        [FromServices] IQueryMediator queryMediator,
+        [FromQuery] string? searchTerm = null,
+        [FromQuery] int maxResults = 10
+    )
+    {
+        var result = await queryMediator.QueryAsync(new SearchSociosQuery
+        {
+            SearchTerm = searchTerm,
+            MaxResults = maxResults
+        });
+        return result.ToCustomMinimalApiResult();
+    }
+    
+    public async Task<IResult> GetSociosAsync(
         [FromServices] IQueryMediator queryMediator,
         [FromQuery] string? q = null,
         [FromQuery] int page = 1,
@@ -86,7 +116,7 @@ public class Socios : EndpointGroupBase
         return result.ToCustomMinimalApiResult();
     }
 
-    public async Task<IResult> CreateSocio(
+    public async Task<IResult> CreateSocioAsync(
         [FromServices] ICommandMediator commandMediator,
         [FromBody] SocioEditDto model)
     {
@@ -94,7 +124,7 @@ public class Socios : EndpointGroupBase
         return result.ToCustomMinimalApiResult();
     }
 
-    public async Task<IResult> UpdateSocio(
+    public async Task<IResult> UpdateSocioAsync(
         [FromServices] ICommandMediator commandMediator,
         [FromRoute] Guid id,
         [FromBody] SocioEditDto model)
@@ -103,11 +133,21 @@ public class Socios : EndpointGroupBase
         return result.ToCustomMinimalApiResult();
     }
 
-    public async Task<IResult> DeleteSocio(
+    public async Task<IResult> DeleteSocioAsync(
       [FromServices] ICommandMediator commandMediator,
       [FromRoute] Guid id)
     {
         var result = await commandMediator.SendAsync(new DeleteSocioCommand(id));
         return result.ToCustomMinimalApiResult();
     }
+
+    public async Task<IResult> CreateMembresiaAsync(
+       [FromServices] ICommandMediator commandMediator,
+       [FromBody] CreateMembresiaDto model)
+    {
+        var result = await commandMediator.SendAsync(new CreateMembresiaCommand(model));
+        return result.ToCustomMinimalApiResult();
+    }
+
+
 }

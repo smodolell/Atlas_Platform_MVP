@@ -10,7 +10,7 @@ public class ApplicationDbContext : IdentityDbContext<Usuario, Rol, int>, IAtlas
 {
     public DbSet<Socio> Socios => Set<Socio>();
 
-    public DbSet<Producto> Productos => Set<Producto>();
+    public DbSet<Plan> Planes => Set<Plan>();
 
     public DbSet<Domain.Entities.Application> SYS_Application =>  base.Set<Domain.Entities.Application>();
 
@@ -21,6 +21,8 @@ public class ApplicationDbContext : IdentityDbContext<Usuario, Rol, int>, IAtlas
     public DbSet<Menu> SYS_Menu =>  Set<Menu>();
 
     public DbSet<Periodicidad> Periodicidades => Set<Periodicidad>();
+
+    public DbSet<Membresia> Membresias => Set<Membresia>();
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
     {
