@@ -52,6 +52,7 @@ public interface ISociosApi
         [Query] int size = 10,
         [Query] string sortColumn = "NomPlan",
         [Query] bool sortDescending = false,
+        [Query] Guid? socioId = null,
         CancellationToken cancellationToken = default);
 
     [Post("/api/socios/membresia/")]

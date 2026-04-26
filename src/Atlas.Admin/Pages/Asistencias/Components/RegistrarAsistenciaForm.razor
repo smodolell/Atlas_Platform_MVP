@@ -1,0 +1,197 @@
+@using Atlas.Shared.Asistencias
+@using Atlas.Shared.Socios
+@using Atlas.Admin.Shared.Autocomplete
+@inject IAsistenciasApi _asistenciasApiForm
+
+<MudGrid Spacing="3">
+
+    <MudItem xs="12">
+        <AutocompleteSocio @bind-SelectedSocio="_socioSeleccionado"
+                           Label="Buscar Socio"
+                           Required="true"
+                           OnSocioSelected="OnSocioChanged" />
+    </MudItem>
+
+    @if (_socioSeleccionado != null)
+    {
+        @if (_cargandoStatus)
+        {
+            <MudItem xs="12">
+                <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+            </MudItem>
+        }
+        else if (_status != null)
+        {
+            <MudItem xs="12">
+                <MudCard Outlined="true">
+                    <MudCardContent>
+                        <MudGrid Spacing="2" AlignItems="AlignItems.Center">
+                            <MudItem xs="12" sm="8">
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudAvatar Color="@(_status.TieneEntradaAbierta ? Color.Success : Color.Primary)"
+                                               Size="Size.Large">
+                                        @_socioSeleccionado.Nombre.FirstOrDefault()
+                                    </MudAvatar>
+                                    <MudStack Spacing="0">
+                                        <MudText Typo="Typo.h6">@_socioSeleccionado.Nombre @_socioSeleccionado.Apellido</MudText>
+                                        @if (_status.TieneEntradaAbierta)
+                                        {
+                                            <MudText Typo="Typo.body2" Color="Color.Success">
+                                                <strong>Dentro del gimnasio</strong> desde @_status.FechaHoraEntrada!.Value.ToString("HH:mm")
+                                            </MudText>
+                                            <MudText Typo="Typo.body2" Color="Color.Secondary">Plan: @_status.NomPlan</MudText>
+                                        }
+                                        else
+                                        {
+                                            <MudText Typo="Typo.body2" Color="Color.Secondary">Fuera del gimnasio</MudText>
+                                        }
+                                    </MudStack>
+                                </MudStack>
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudStack Justify="Justify.FlexEnd" Row="true">
+                                    @if (_status.TieneEntradaAbierta)
+                                    {
+                                        <MudButton Variant="Variant.Filled"
+                                                   Color="Color.Warning"
+                                                   StartIcon="@Icons.Material.Filled.ExitToApp"
+                                                   OnClick="HandleSalida"
+                                                   Disabled="_isSubmitting"
+                                                   Size="Size.Large">
+                                            @if (_isSubmitting)
+                                            {
+                                                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                                                <MudText Class="ms-2">Procesando...</MudText>
+                                            }
+                                            else
+                                            {
+                                                <MudText>Registrar Salida</MudText>
+                                            }
+                                        </MudButton>
+                                    }
+                                    else
+                                    {
+                                        <MudButton Variant="Variant.Filled"
+                                                   Color="Color.Success"
+                                                   StartIcon="@Icons.Material.Filled.Login"
+                                                   OnClick="HandleEntrada"
+                                                   Disabled="_isSubmitting"
+                                                   Size="Size.Large">
+                                            @if (_isSubmitting)
+                                            {
+                                                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                                                <MudText Class="ms-2">Procesando...</MudText>
+                                            }
+                                            else
+                                            {
+                                                <MudText>Registrar Entrada</MudText>
+                                            }
+                                        </MudButton>
+                                    }
+                                </MudStack>
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        }
+    }
+
+</MudGrid>
+
+@code {
+    [Parameter] public EventCallback OnRegistrado { get; set; }
+
+    private SocioSearchDto? _socioSeleccionado;
+    private AsistenciaSocioStatusDto? _status;
+    private bool _cargandoStatus;
+    private bool _isSubmitting;
+
+    private async Task OnSocioChanged(SocioSearchDto socio)
+    {
+        _status = null;
+        _cargandoStatus = true;
+        StateHasChanged();
+
+        try
+        {
+            var response = await _asistenciasApiForm.GetAsistenciaSocioStatusAsync(socio.Id);
+            if (response.Success && response.Data != null)
+                _status = response.Data;
+            else
+                _snackbarService.Add(response.Message ?? "Error al consultar estado del socio", Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error inesperado: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _cargandoStatus = false;
+        }
+    }
+
+    private async Task HandleEntrada()
+    {
+        if (_socioSeleccionado == null || _isSubmitting) return;
+        _isSubmitting = true;
+        try
+        {
+            var response = await _asistenciasApiForm.RegistrarEntradaAsync(new RegistrarEntradaDto { SocioId = _socioSeleccionado.Id });
+            if (response.Success)
+            {
+                _snackbarService.Add($"Entrada de {_socioSeleccionado.Nombre} registrada correctamente", Severity.Success);
+                ResetForm();
+                if (OnRegistrado.HasDelegate)
+                    await OnRegistrado.InvokeAsync();
+            }
+            else
+            {
+                _snackbarService.Add(response.Message ?? "Error al registrar la entrada", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error inesperado: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    private async Task HandleSalida()
+    {
+        if (_status?.AsistenciaId == null || _isSubmitting) return;
+        _isSubmitting = true;
+        try
+        {
+            var response = await _asistenciasApiForm.RegistrarSalidaAsync(new RegistrarSalidaDto { AsistenciaId = _status.AsistenciaId.Value });
+            if (response.Success)
+            {
+                _snackbarService.Add($"Salida de {_socioSeleccionado!.Nombre} registrada correctamente", Severity.Success);
+                ResetForm();
+                if (OnRegistrado.HasDelegate)
+                    await OnRegistrado.InvokeAsync();
+            }
+            else
+            {
+                _snackbarService.Add(response.Message ?? "Error al registrar la salida", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error inesperado: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    private void ResetForm()
+    {
+        _socioSeleccionado = null;
+        _status = null;
+    }
+}

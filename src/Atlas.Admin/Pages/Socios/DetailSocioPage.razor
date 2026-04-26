@@ -1,36 +1,113 @@
-﻿@attribute [Route(PageRoute.DetailSocioPage + "/{SocioId:guid}")]
+@attribute [Route(PageRoute.DetailSocioPage + "/{SocioId:guid}")]
 @attribute [AccessPoint(AppMenu.MenuSocios, "Detalle Socio", AccessPointType.Page)]
-@using Atlas.Shared.Configuracion
+@using Atlas.Shared.Socios
 @using Atlas.Client.Services
 @using Atlas.Admin.Pages.Socios.Components
+@using Atlas.Admin.Pages.Asistencias.Components
+@inject ISociosApi _sociosApiDetail
 
-<PageHeader Title="Detalle Socio" Icon="@Icons.Material.Filled.Person">
+<PageHeader Title="@(_socio != null ? $"{_socio.Nombre} {_socio.Apellido}" : "Detalle Socio")"
+            Icon="@Icons.Material.Filled.Person">
     <MudBreadcrumbs Items="_breadcrumbItems"></MudBreadcrumbs>
 </PageHeader>
-<MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" TabPanelsClass="pa-6">
-    <MudTabPanel Text="Tab One">
-        <MudText>Content One</MudText>
-    </MudTabPanel>
-    <MudTabPanel Text="Membresías">
-        <MembresiaForm SocioId="SocioId"></MembresiaForm>
-    </MudTabPanel>
-    <MudTabPanel Text="Tab Three">
-        <MudText>Content Three</MudText>
-    </MudTabPanel>
-    <MudTabPanel Text="Tab Disabled" Disabled="true">
-        <MudText>Content Disabled</MudText>
-    </MudTabPanel>
-</MudTabs>
+
+@if (_isLoading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mt-4" />
+}
+else if (_socio == null)
+{
+    <MudAlert Severity="Severity.Error" Class="mt-4">No se encontró el socio solicitado.</MudAlert>
+}
+else
+{
+    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" TabPanelsClass="pa-6" Class="mt-4">
+
+        <MudTabPanel Text="Información" Icon="@Icons.Material.Filled.Info">
+            <MudGrid Spacing="3">
+                <MudItem xs="12" sm="6" md="4">
+                    <MudCard Outlined="true">
+                        <MudCardHeader>
+                            <CardHeaderAvatar>
+                                <MudAvatar Color="Color.Primary" Size="Size.Large">
+                                    @(_socio.Nombre.FirstOrDefault())
+                                </MudAvatar>
+                            </CardHeaderAvatar>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.h6">@_socio.Nombre @_socio.Apellido</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">DNI: @_socio.DNI</MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudList T="string" Dense="true" DisableGutters="true">
+                                @if (!string.IsNullOrEmpty(_socio.Email))
+                                {
+                                    <MudListItem Icon="@Icons.Material.Filled.Email">
+                                        <MudText Typo="Typo.body2">@_socio.Email</MudText>
+                                    </MudListItem>
+                                }
+                                @if (!string.IsNullOrEmpty(_socio.Telefono))
+                                {
+                                    <MudListItem Icon="@Icons.Material.Filled.Phone">
+                                        <MudText Typo="Typo.body2">@_socio.Telefono</MudText>
+                                    </MudListItem>
+                                }
+                                @if (_socio.FechaNacimiento.HasValue)
+                                {
+                                    <MudListItem Icon="@Icons.Material.Filled.Cake">
+                                        <MudText Typo="Typo.body2">@_socio.FechaNacimiento.Value.ToString("dd/MM/yyyy")</MudText>
+                                    </MudListItem>
+                                }
+                            </MudList>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Membresías" Icon="@Icons.Material.Filled.CardMembership">
+            <MembresiaList SocioId="SocioId" />
+        </MudTabPanel>
+
+        <MudTabPanel Text="Asistencias" Icon="@Icons.Material.Filled.HowToReg">
+            <AsistenciaList SocioId="SocioId" />
+        </MudTabPanel>
+
+    </MudTabs>
+}
 
 @code {
+    [Parameter] public Guid SocioId { get; set; }
 
-    [Parameter]
-    public Guid SocioId { get; set; }
+    private SocioEditDto? _socio;
+    private bool _isLoading = true;
 
-    private readonly List<BreadcrumbItem> _breadcrumbItems = new()
-{
+    private readonly List<BreadcrumbItem> _breadcrumbItems =
+    [
         new BreadcrumbItem("Inicio", href: "/"),
         new BreadcrumbItem("Socios", href: PageRoute.SociosPage),
         new BreadcrumbItem("Detalle Socio", href: null, disabled: true)
-    };
+    ];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _isLoading = true;
+        try
+        {
+            var response = await _sociosApiDetail.GetSocioById(SocioId);
+            if (response.Success && response.Data != null)
+                _socio = response.Data;
+            else
+                _snackbarService.Add(response.Message ?? "Error al cargar el socio", Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error inesperado: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
 }

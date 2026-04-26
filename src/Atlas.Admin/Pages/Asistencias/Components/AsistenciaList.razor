@@ -1,0 +1,204 @@
+@using Atlas.Shared.Asistencias
+@using Atlas.Client.Services
+@inject IAsistenciasApi _asistenciasApi
+
+<MudDataGrid T="AsistenciaListItemDto"
+             Outlined="true"
+             Dense="true"
+             Bordered="true"
+             ServerData="GetTableData"
+             FixedHeader="true"
+             SortMode="SortMode.Single"
+             @ref="_dataGridRef"
+             Loading="_isLoading"
+             Striped="true">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">@(SocioId.HasValue ? "Historial de Asistencias" : "Asistencias del día")</MudText>
+        <MudSpacer />
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            @if (!SocioId.HasValue)
+            {
+                <MudDatePicker Date="_fecha"
+                               DateChanged="OnFechaChanged"
+                               Label="Fecha"
+                               DateFormat="dd/MM/yyyy"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Class="flex-grow-0"
+                               Style="min-width:150px" />
+            }
+            <MudTextField T="string"
+                          ValueChanged="@(s => OnSearch(s))"
+                          Placeholder="Buscar socio o plan..."
+                          Adornment="Adornment.Start"
+                          Clearable="true"
+                          Class="flex-grow-0"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          IconSize="Size.Small" />
+            <MudTooltip Text="Actualizar">
+                <MudIconButton Icon="@Icons.Material.Outlined.Refresh"
+                               Size="Size.Small"
+                               Color="Color.Info"
+                               OnClick="RefreshData"
+                               Disabled="_isLoading" />
+            </MudTooltip>
+            @if (!SocioId.HasValue)
+            {
+                <MudTooltip Text="Registrar Asistencia">
+                    <MudButton Variant="Variant.Filled"
+                               Size="Size.Small"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.HowToReg"
+                               OnClick="() => _navManager.NavigateTo(PageRoute.RegistrarAsistenciaPage)"
+                               Disabled="_isLoading">
+                        Registrar
+                    </MudButton>
+                </MudTooltip>
+            }
+        </MudStack>
+    </ToolBarContent>
+
+    <Columns>
+        <PropertyColumn Property="x => x.NomSocio" Title="Socio" />
+        <PropertyColumn Property="x => x.NomPlan" Title="Plan" />
+        <TemplateColumn Title="Entrada" SortBy="x => x.FechaHoraEntrada">
+            <CellTemplate>
+                <MudText Typo="Typo.body2">@context.Item.FechaHoraEntrada.ToString("HH:mm")</MudText>
+            </CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn Title="Salida" SortBy="x => x.FechaHoraSalida">
+            <CellTemplate>
+                @if (context.Item.FechaHoraSalida.HasValue)
+                {
+                    <MudText Typo="Typo.body2">@context.Item.FechaHoraSalida.Value.ToString("HH:mm")</MudText>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">—</MudText>
+                }
+            </CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn Title="Estado" StickyRight="true">
+            <CellTemplate>
+                @{
+                    var (color, label) = context.Item.Estatus switch
+                    {
+                        "EnCurso" => (Color.Success, "En curso"),
+                        "Completada" => (Color.Default, "Completada"),
+                        _ => (Color.Error, context.Item.Estatus)
+                    };
+                }
+                <MudChip T="string" Color="@color" Size="Size.Small" Variant="Variant.Filled">@label</MudChip>
+            </CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn Title="" StickyRight="true">
+            <CellTemplate>
+                @if (context.Item.Estatus == "EnCurso")
+                {
+                    <MudTooltip Text="Registrar Salida">
+                        <MudIconButton Icon="@Icons.Material.Filled.ExitToApp"
+                                       Size="Size.Small"
+                                       Color="Color.Warning"
+                                       OnClick="() => RegistrarSalida(context.Item)" />
+                    </MudTooltip>
+                }
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+
+    <NoRecordsContent>
+        <MudText>No se encontraron asistencias para esta fecha.</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudText>Cargando...</MudText>
+    </LoadingContent>
+</MudDataGrid>
+
+@code {
+    [Parameter] public Guid? SocioId { get; set; }
+
+    private MudDataGrid<AsistenciaListItemDto> _dataGridRef = null!;
+    private bool _isLoading;
+    private string? _searchText;
+    private DateTime? _fecha = DateTime.Today;
+
+    private async Task<GridData<AsistenciaListItemDto>> GetTableData(GridState<AsistenciaListItemDto> gridState, CancellationToken cancellationToken)
+    {
+        try
+        {
+            _isLoading = true;
+            StateHasChanged();
+
+            var pageNumber = gridState.Page + 1;
+            var sortBy = nameof(AsistenciaListItemDto.FechaHoraEntrada);
+            var sortDescending = true;
+
+            var sortDef = gridState.SortDefinitions.FirstOrDefault();
+            if (sortDef != null)
+            {
+                sortBy = sortDef.SortBy;
+                sortDescending = sortDef.Descending;
+            }
+
+            var fechaFiltro = SocioId.HasValue ? null : _fecha;
+            var response = await _asistenciasApi.GetAsistenciasAsync(
+                _searchText, pageNumber, gridState.PageSize,
+                sortBy, sortDescending, fechaFiltro, SocioId, cancellationToken);
+
+            return new GridData<AsistenciaListItemDto>
+            {
+                TotalItems = response.Data!.TotalCount,
+                Items = response.Data!.Results
+            };
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error al cargar asistencias: {ex.Message}", Severity.Error);
+            return new GridData<AsistenciaListItemDto> { TotalItems = 0, Items = [] };
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RegistrarSalida(AsistenciaListItemDto item)
+    {
+        try
+        {
+            var response = await _asistenciasApi.RegistrarSalidaAsync(new RegistrarSalidaDto { AsistenciaId = item.Id });
+            if (response.Success)
+            {
+                _snackbarService.Add($"Salida de {item.NomSocio} registrada correctamente", Severity.Success);
+                await RefreshData();
+            }
+            else
+            {
+                _snackbarService.Add(response.Message ?? "Error al registrar salida", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error inesperado: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OnFechaChanged(DateTime? fecha)
+    {
+        _fecha = fecha;
+        await RefreshData();
+    }
+
+    private async Task OnSearch(string? text)
+    {
+        _searchText = text;
+        await RefreshData();
+    }
+
+    private async Task RefreshData()
+    {
+        if (_dataGridRef != null)
+            await _dataGridRef.ReloadServerData();
+    }
+}

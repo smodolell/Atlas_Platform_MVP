@@ -33,21 +33,27 @@
                                OnClick="RefreshData"
                                Disabled="_isLoading" />
             </MudTooltip>
-            <MudTooltip Text="Nueva Membresía">
-                <MudButton Variant="Variant.Filled"
-                           Size="Size.Small"
-                           Color="Color.Primary"
-                           StartIcon="@Icons.Material.Filled.PersonAdd"
-                           OnClick="AddClick"
-                           Disabled="_isLoading">
-                    Nueva Membresía
-                </MudButton>
-            </MudTooltip>
+            @if (SocioId == null)
+            {
+                <MudTooltip Text="Nueva Membresía">
+                    <MudButton Variant="Variant.Filled"
+                               Size="Size.Small"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.PersonAdd"
+                               OnClick="AddClick"
+                               Disabled="_isLoading">
+                        Nueva Membresía
+                    </MudButton>
+                </MudTooltip>
+            }
         </MudStack>
     </ToolBarContent>
 
     <Columns>
-        <PropertyColumn Property="x => x.NomSocio" Title="Socio" StickyLeft="true" />
+        @if (SocioId == null)
+        {
+            <PropertyColumn Property="x => x.NomSocio" Title="Socio" StickyLeft="true" />
+        }
         <PropertyColumn Property="x => x.NomPlan" Title="Plan" />
         <TemplateColumn Title="Fecha Inicio" SortBy="x => x.FechaInicio">
             <CellTemplate>
@@ -93,6 +99,8 @@
 </MudDataGrid>
 
 @code {
+    [Parameter] public Guid? SocioId { get; set; }
+
     private MudDataGrid<MembresiaListItemDto> _dataGridRef = null!;
     private bool _isLoading;
     private string? _searchText;
@@ -117,7 +125,7 @@
 
             var response = await _sociosApi.GetMembresiasAsync(
                 _searchText, pageNumber, gridState.PageSize,
-                sortBy, sortDescending, cancellationToken);
+                sortBy, sortDescending, SocioId, cancellationToken);
 
             return new GridData<MembresiaListItemDto>
             {

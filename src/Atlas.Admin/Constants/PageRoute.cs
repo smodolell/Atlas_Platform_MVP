@@ -25,4 +25,7 @@ internal static class PageRoute
     public const string NewTipoPagoPage = Prefix + "new_tipo_pago";
     public const string EditTipoPagoPage = Prefix + "edit_tipo_pago";
 
+    public const string AsistenciasPage = Prefix + "asistencias";
+    public const string RegistrarAsistenciaPage = Prefix + "registrar_asistencia";
+
 }

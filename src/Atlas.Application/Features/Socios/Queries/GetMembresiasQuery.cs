@@ -36,6 +36,7 @@ public class GetMembresiasQuery : IQuery<Result<PagedResultDto<MembresiaListItem
 
     public bool SortDescending { get; set; }
     public string? SearchText { get; set; }
+    public Guid? SocioId { get; set; }
 }
 
 internal class GetMembresiasQueryHandler(
@@ -52,7 +53,7 @@ internal class GetMembresiasQueryHandler(
     {
         try
         {
-            var spec = new MembresiasSpec(request.SearchText);
+            var spec = new MembresiasSpec(request.SearchText, request.SocioId);
             var query = _context.Membresias.WithSpecification(spec);
             var sortedQuery = _sorter.ApplySort(query, request.SortColumn, request.SortDescending);
             var result = await _paginator.PaginateAsync<Membresia, MembresiaListItemDto>(sortedQuery, request.Page, request.PageSize, cancellationToken);

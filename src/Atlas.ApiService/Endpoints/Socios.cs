@@ -169,7 +169,8 @@ public class Socios : EndpointGroupBase
         [FromQuery] int page = 1,
         [FromQuery] int size = 10,
         [FromQuery] string sortColumn = nameof(MembresiaListItemDto.NomPlan),
-        [FromQuery] bool sortDescending = false)
+        [FromQuery] bool sortDescending = false,
+        [FromQuery] Guid? socioId = null)
     {
         var result = await queryMediator.QueryAsync(new GetMembresiasQuery
         {
@@ -177,7 +178,8 @@ public class Socios : EndpointGroupBase
             Page = page,
             PageSize = size,
             SortColumn = sortColumn,
-            SortDescending = sortDescending
+            SortDescending = sortDescending,
+            SocioId = socioId
         });
         return result.ToCustomMinimalApiResult();
     }

@@ -56,6 +56,9 @@ public static class AppMenu
     public const string MenuSocios = "Socios";
     public const string MenuSociosIcon = Icons.Material.Filled.PeopleAlt;
 
+    public const string MenuAsistencias = "Asistencias";
+    public const string MenuAsistenciasIcon = Icons.Material.Filled.HowToReg;
+
     public const string MenuGestion = "Gestión";
     public const string MenuGestionIcon = Icons.Material.Filled.Assignment;
 

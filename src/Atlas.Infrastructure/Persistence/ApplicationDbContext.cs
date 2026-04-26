@@ -30,6 +30,7 @@ public class ApplicationDbContext : IdentityDbContext<Usuario, Rol, int>, IAtlas
 
     public DbSet<MembresiaPago> MembresiaPagos => Set<MembresiaPago>();
 
+    public DbSet<Asistencia> Asistencias => Set<Asistencia>();
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
     {
     }

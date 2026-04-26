@@ -1,0 +1,22 @@
+@attribute [Route(PageRoute.RegistrarAsistenciaPage)]
+@attribute [AccessPoint(AppMenu.MenuAsistencias, "Registrar Asistencia", AccessPointType.Page)]
+@using Atlas.Admin.Pages.Asistencias.Components
+
+<PageHeader Title="Registrar Asistencia" Icon="@Icons.Material.Filled.HowToReg">
+    <MudBreadcrumbs Items="_breadcrumbItems"></MudBreadcrumbs>
+</PageHeader>
+
+<MudPaper Elevation="2" Class="pa-6 mt-4">
+    <RegistrarAsistenciaForm OnRegistrado="HandleRegistrado" />
+</MudPaper>
+
+@code {
+    private readonly List<BreadcrumbItem> _breadcrumbItems =
+    [
+        new BreadcrumbItem("Inicio", href: "/"),
+        new BreadcrumbItem("Asistencias", href: PageRoute.AsistenciasPage),
+        new BreadcrumbItem("Registrar Asistencia", href: null, disabled: true)
+    ];
+
+    private void HandleRegistrado() => _navManager.NavigateTo(PageRoute.AsistenciasPage);
+}

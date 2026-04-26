@@ -12,6 +12,7 @@ public class Socio
     public string? Email { get; set; } = string.Empty;
     public string? Telefono { get; set; } = string.Empty;
 
+    public ICollection<Asistencia> Asistencias { get; set; } = new HashSet<Asistencia>();
 
 }
 

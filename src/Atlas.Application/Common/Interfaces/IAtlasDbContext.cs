@@ -2,6 +2,7 @@
 
 public interface IAtlasDbContext
 {
+    DbSet<Asistencia> Asistencias { get; }
     DbSet<Socio> Socios { get; }
     DbSet<Plan> Planes { get; }
     DbSet<Periodicidad> Periodicidades { get; }
