@@ -34,11 +34,15 @@ public class UpdatePlanCommandHandler(
 
         if (existePlanConMismoNombre)
             return Result.Invalid(new ValidationError($"Ya existe un producto con el nombre {model.NomPlan}"));
+        producto.ServicioId = model.ServicioId;
         producto.PeriodicidadId = model.PeriodicidadId;
         producto.NomPlan = model.NomPlan;
         producto.Descripcion = model.Descripcion;
         producto.Precio = model.Precio;
         producto.CupoMaximo = model.CupoMaximo;
+        producto.EsLibre = model.EsLibre;
+        producto.EsProgramado = model.EsProgramado;
+        producto.EsTicket = model.EsTicket;
         producto.Activo = model.Activo;
 
         _context.Planes.Update(producto);

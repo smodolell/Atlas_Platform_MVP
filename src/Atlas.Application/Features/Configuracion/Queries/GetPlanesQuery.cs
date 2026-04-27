@@ -43,6 +43,7 @@ public class GetPlanesQuery : IQuery<Result<PagedResultDto<PlanListItemDto>>>
     public string? SearchText { get; set; }
 
     public int? PeriodicidadId { get; set; }
+    public int? ServicioId { get; set; }
 }
 
 internal class GetPlanesQueryHandler(
@@ -59,7 +60,7 @@ internal class GetPlanesQueryHandler(
     {
         try
         {
-            var spec = new PlanesSpec(request.SearchText,request.PeriodicidadId);
+            var spec = new PlanesSpec(request.SearchText, request.PeriodicidadId, request.ServicioId);
             var query = _context.Planes.WithSpecification(spec);
             var sortedQuery = _sorter.ApplySort(query, request.SortColumn, request.SortDescending);
             var result = await _paginator.PaginateAsync<Plan, PlanListItemDto>(sortedQuery, request.Page, request.PageSize, cancellationToken);

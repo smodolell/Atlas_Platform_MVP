@@ -16,11 +16,16 @@ internal class CreatePlanCommandHandler(IAtlasDbContext context, IValidator<Plan
             return Result.Invalid(validationResult.AsErrors());
         var plan = new Plan
         {
+            ServicioId = model.ServicioId,
             PeriodicidadId = model.PeriodicidadId,
             NomPlan = model.NomPlan,
             Descripcion = model.Descripcion,
             Precio = model.Precio,
-            CupoMaximo = model.CupoMaximo
+            CupoMaximo = model.CupoMaximo,
+            EsLibre = model.EsLibre,
+            EsProgramado = model.EsProgramado,
+            EsTicket = model.EsTicket,
+            Activo = model.Activo,
         };
         await _context.Planes.AddAsync(plan);
         await _context.SaveChangesAsync();

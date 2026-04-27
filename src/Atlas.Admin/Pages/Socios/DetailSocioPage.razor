@@ -24,45 +24,62 @@ else
     <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" TabPanelsClass="pa-6" Class="mt-4">
 
         <MudTabPanel Text="Información" Icon="@Icons.Material.Filled.Info">
-            <MudGrid Spacing="3">
-                <MudItem xs="12" sm="6" md="4">
-                    <MudCard Outlined="true">
-                        <MudCardHeader>
-                            <CardHeaderAvatar>
-                                <MudAvatar Color="Color.Primary" Size="Size.Large">
-                                    @(_socio.Nombre.FirstOrDefault())
-                                </MudAvatar>
-                            </CardHeaderAvatar>
-                            <CardHeaderContent>
-                                <MudText Typo="Typo.h6">@_socio.Nombre @_socio.Apellido</MudText>
-                                <MudText Typo="Typo.body2" Color="Color.Secondary">DNI: @_socio.DNI</MudText>
-                            </CardHeaderContent>
-                        </MudCardHeader>
-                        <MudCardContent>
-                            <MudList T="string" Dense="true" DisableGutters="true">
-                                @if (!string.IsNullOrEmpty(_socio.Email))
-                                {
-                                    <MudListItem Icon="@Icons.Material.Filled.Email">
-                                        <MudText Typo="Typo.body2">@_socio.Email</MudText>
-                                    </MudListItem>
-                                }
-                                @if (!string.IsNullOrEmpty(_socio.Telefono))
-                                {
-                                    <MudListItem Icon="@Icons.Material.Filled.Phone">
-                                        <MudText Typo="Typo.body2">@_socio.Telefono</MudText>
-                                    </MudListItem>
-                                }
-                                @if (_socio.FechaNacimiento.HasValue)
-                                {
-                                    <MudListItem Icon="@Icons.Material.Filled.Cake">
-                                        <MudText Typo="Typo.body2">@_socio.FechaNacimiento.Value.ToString("dd/MM/yyyy")</MudText>
-                                    </MudListItem>
-                                }
-                            </MudList>
-                        </MudCardContent>
-                    </MudCard>
-                </MudItem>
-            </MudGrid>
+            @if (_isEditing)
+            {
+                <SocioForm Model="_socio"
+                           IsSaving="_isSaving"
+                           OnValidSubmit="HandleSave"
+                           OnCancel="CancelEdit" />
+            }
+            else
+            {
+                <MudGrid Spacing="3">
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCard Outlined="true">
+                            <MudCardHeader>
+                                <CardHeaderAvatar>
+                                    <MudAvatar Color="Color.Primary" Size="Size.Large">
+                                        @(_socio.Nombre.FirstOrDefault())
+                                    </MudAvatar>
+                                </CardHeaderAvatar>
+                                <CardHeaderContent>
+                                    <MudText Typo="Typo.h6">@_socio.Nombre @_socio.Apellido</MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">DNI: @_socio.DNI</MudText>
+                                </CardHeaderContent>
+                                <CardHeaderActions>
+                                    <MudTooltip Text="Editar socio">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                                       Color="Color.Primary"
+                                                       OnClick="StartEdit" />
+                                    </MudTooltip>
+                                </CardHeaderActions>
+                            </MudCardHeader>
+                            <MudCardContent>
+                                <MudList T="string" Dense="true" DisableGutters="true">
+                                    @if (!string.IsNullOrEmpty(_socio.Email))
+                                    {
+                                        <MudListItem Icon="@Icons.Material.Filled.Email">
+                                            <MudText Typo="Typo.body2">@_socio.Email</MudText>
+                                        </MudListItem>
+                                    }
+                                    @if (!string.IsNullOrEmpty(_socio.Telefono))
+                                    {
+                                        <MudListItem Icon="@Icons.Material.Filled.Phone">
+                                            <MudText Typo="Typo.body2">@_socio.Telefono</MudText>
+                                        </MudListItem>
+                                    }
+                                    @if (_socio.FechaNacimiento.HasValue)
+                                    {
+                                        <MudListItem Icon="@Icons.Material.Filled.Cake">
+                                            <MudText Typo="Typo.body2">@_socio.FechaNacimiento.Value.ToString("dd/MM/yyyy")</MudText>
+                                        </MudListItem>
+                                    }
+                                </MudList>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                </MudGrid>
+            }
         </MudTabPanel>
 
         <MudTabPanel Text="Membresías" Icon="@Icons.Material.Filled.CardMembership">
@@ -81,6 +98,8 @@ else
 
     private SocioEditDto? _socio;
     private bool _isLoading = true;
+    private bool _isEditing;
+    private bool _isSaving;
 
     private readonly List<BreadcrumbItem> _breadcrumbItems =
     [
@@ -92,6 +111,7 @@ else
     protected override async Task OnParametersSetAsync()
     {
         _isLoading = true;
+        _isEditing = false;
         try
         {
             var response = await _sociosApiDetail.GetSocioById(SocioId);
@@ -107,6 +127,37 @@ else
         finally
         {
             _isLoading = false;
+        }
+    }
+
+    private void StartEdit() => _isEditing = true;
+
+    private void CancelEdit() => _isEditing = false;
+
+    private async Task HandleSave(SocioEditDto model)
+    {
+        _isSaving = true;
+        try
+        {
+            var response = await _sociosApiDetail.UpdateSocio(SocioId, model);
+            if (response.Success)
+            {
+                _socio = model;
+                _isEditing = false;
+                _snackbarService.Add("Socio actualizado correctamente.", Severity.Success);
+            }
+            else
+            {
+                _snackbarService.Add(response.Message ?? "Error al actualizar el socio.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error inesperado: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isSaving = false;
         }
     }
 

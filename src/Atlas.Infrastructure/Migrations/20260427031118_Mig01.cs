@@ -38,6 +38,20 @@ namespace Atlas.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Empleados",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Nombre = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Apellido = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Empleados", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Menus",
                 columns: table => new
                 {
@@ -86,6 +100,21 @@ namespace Atlas.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Servicios",
+                columns: table => new
+                {
+                    NomServicio = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Descripcion = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    Activo = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Servicios", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Socios",
                 columns: table => new
                 {
@@ -96,7 +125,8 @@ namespace Atlas.Infrastructure.Migrations
                     DNI = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     FechaNacimiento = table.Column<DateTime>(type: "date", nullable: false),
                     Email = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    Telefono = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true)
+                    Telefono = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    FotoUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -187,31 +217,6 @@ namespace Atlas.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Planes",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    PeriodicidadId = table.Column<int>(type: "int", nullable: false),
-                    NomPlan = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Descripcion = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
-                    Precio = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    CupoMaximo = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
-                    DiasGracia = table.Column<int>(type: "int", nullable: false),
-                    Activo = table.Column<bool>(type: "bit", nullable: false, defaultValue: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Planes", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Planes_Periodicidades_PeriodicidadId",
-                        column: x => x.PeriodicidadId,
-                        principalTable: "Periodicidades",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
@@ -228,6 +233,72 @@ namespace Atlas.Infrastructure.Migrations
                         name: "FK_AspNetRoleClaims_Roles_RoleId",
                         column: x => x.RoleId,
                         principalTable: "Roles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Planes",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ServicioId = table.Column<int>(type: "int", nullable: false),
+                    PeriodicidadId = table.Column<int>(type: "int", nullable: false),
+                    NomPlan = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Descripcion = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
+                    Precio = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    EsLibre = table.Column<bool>(type: "bit", nullable: false),
+                    EsProgramado = table.Column<bool>(type: "bit", nullable: false),
+                    EsTicket = table.Column<bool>(type: "bit", nullable: false),
+                    CupoMaximo = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
+                    DiasGracia = table.Column<int>(type: "int", nullable: false),
+                    Activo = table.Column<bool>(type: "bit", nullable: false, defaultValue: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Planes", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Planes_Periodicidades_PeriodicidadId",
+                        column: x => x.PeriodicidadId,
+                        principalTable: "Periodicidades",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Planes_Servicios_ServicioId",
+                        column: x => x.ServicioId,
+                        principalTable: "Servicios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ServicioHorarios",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ServicioId = table.Column<int>(type: "int", nullable: false),
+                    EmpleadoId = table.Column<int>(type: "int", nullable: false),
+                    DiaSemana = table.Column<int>(type: "int", nullable: false),
+                    HoraInicio = table.Column<TimeSpan>(type: "time", nullable: false),
+                    HoraFin = table.Column<TimeSpan>(type: "time", nullable: false),
+                    Activo = table.Column<bool>(type: "bit", nullable: false, defaultValue: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ServicioHorarios", x => x.Id);
+                    table.CheckConstraint("CK_ServiciosHorarios_HoraInicio_Menor_HoraFin", "HoraInicio < HoraFin");
+                    table.ForeignKey(
+                        name: "FK_ServicioHorarios_Empleados_EmpleadoId",
+                        column: x => x.EmpleadoId,
+                        principalTable: "Empleados",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ServicioHorarios_Servicios_ServicioId",
+                        column: x => x.ServicioId,
+                        principalTable: "Servicios",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -370,6 +441,11 @@ namespace Atlas.Infrastructure.Migrations
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
                     SocioId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     PlanId = table.Column<int>(type: "int", nullable: false),
+                    EsLibre = table.Column<bool>(type: "bit", nullable: false),
+                    EsProgramado = table.Column<bool>(type: "bit", nullable: false),
+                    EsTicket = table.Column<bool>(type: "bit", nullable: false),
+                    TicketTotal = table.Column<int>(type: "int", nullable: false),
+                    TicketDisponibles = table.Column<int>(type: "int", nullable: false),
                     Monto = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     IVA = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     Total = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
@@ -399,6 +475,37 @@ namespace Atlas.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "PlanesHorario",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    PlanId = table.Column<int>(type: "int", nullable: false),
+                    EmpleadoId = table.Column<int>(type: "int", nullable: false),
+                    DiaSemana = table.Column<int>(type: "int", nullable: false),
+                    HoraInicio = table.Column<TimeOnly>(type: "time", nullable: false),
+                    HoraFin = table.Column<TimeOnly>(type: "time", nullable: false),
+                    Activo = table.Column<bool>(type: "bit", nullable: false, defaultValue: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PlanesHorario", x => x.Id);
+                    table.CheckConstraint("CK_PlanHorario_HoraFin", "HoraFin > HoraInicio");
+                    table.ForeignKey(
+                        name: "FK_PlanesHorario_Empleados_EmpleadoId",
+                        column: x => x.EmpleadoId,
+                        principalTable: "Empleados",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_PlanesHorario_Planes_PlanId",
+                        column: x => x.PlanId,
+                        principalTable: "Planes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "MembresiasPagos",
                 columns: table => new
                 {
@@ -423,6 +530,77 @@ namespace Atlas.Infrastructure.Migrations
                         name: "FK_MembresiasPagos_Pagos_PagoId",
                         column: x => x.PagoId,
                         principalTable: "Pagos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PlanesSesion",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
+                    PlanId = table.Column<int>(type: "int", nullable: false),
+                    PlanHorarioId = table.Column<int>(type: "int", nullable: false),
+                    EmpleadoId = table.Column<int>(type: "int", nullable: false),
+                    Fecha = table.Column<DateOnly>(type: "date", nullable: false),
+                    HoraInicio = table.Column<TimeOnly>(type: "time", nullable: false),
+                    HoraFin = table.Column<TimeOnly>(type: "time", nullable: false),
+                    Estado = table.Column<int>(type: "int", nullable: false, defaultValue: 1)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PlanesSesion", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PlanesSesion_Empleados_EmpleadoId",
+                        column: x => x.EmpleadoId,
+                        principalTable: "Empleados",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_PlanesSesion_PlanesHorario_PlanHorarioId",
+                        column: x => x.PlanHorarioId,
+                        principalTable: "PlanesHorario",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_PlanesSesion_Planes_PlanId",
+                        column: x => x.PlanId,
+                        principalTable: "Planes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Asistencias",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
+                    PlanId = table.Column<int>(type: "int", nullable: false),
+                    SocioId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    PlanSesionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    Estatus = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    FechaHoraEntrada = table.Column<DateTime>(type: "datetime2(7)", nullable: false),
+                    FechaHoraSalida = table.Column<DateTime>(type: "datetime2(7)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Asistencias", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Asistencias_PlanesSesion_PlanSesionId",
+                        column: x => x.PlanSesionId,
+                        principalTable: "PlanesSesion",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Asistencias_Planes_PlanId",
+                        column: x => x.PlanId,
+                        principalTable: "Planes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Asistencias_Socios_SocioId",
+                        column: x => x.SocioId,
+                        principalTable: "Socios",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -461,6 +639,31 @@ namespace Atlas.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Asistencias_FechaHoraEntrada",
+                table: "Asistencias",
+                column: "FechaHoraEntrada");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Asistencias_PlanId",
+                table: "Asistencias",
+                column: "PlanId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Asistencias_PlanSesionId",
+                table: "Asistencias",
+                column: "PlanSesionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Asistencias_Socio_FechaEntrada",
+                table: "Asistencias",
+                columns: new[] { "SocioId", "FechaHoraEntrada" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Asistencias_SocioId",
+                table: "Asistencias",
+                column: "SocioId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
                 column: "RoleId");
@@ -479,6 +682,11 @@ namespace Atlas.Infrastructure.Migrations
                 name: "IX_AspNetUserRoles_RoleId",
                 table: "AspNetUserRoles",
                 column: "RoleId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Empleado_NombreApellido",
+                table: "Empleados",
+                columns: new[] { "Nombre", "Apellido" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Membresias_FechaVencimiento",
@@ -574,6 +782,51 @@ namespace Atlas.Infrastructure.Migrations
                 column: "PeriodicidadId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Planes_ServicioId",
+                table: "Planes",
+                column: "ServicioId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Planes_ServicioId_Activo",
+                table: "Planes",
+                columns: new[] { "ServicioId", "Activo" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PlanHorario_EmpleadoId",
+                table: "PlanesHorario",
+                column: "EmpleadoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PlanHorario_PlanEmpleadoDia",
+                table: "PlanesHorario",
+                columns: new[] { "PlanId", "EmpleadoId", "DiaSemana" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PlanSesion_EmpleadoId",
+                table: "PlanesSesion",
+                column: "EmpleadoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PlanSesion_Estado",
+                table: "PlanesSesion",
+                column: "Estado");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PlanSesion_FechaEstadoPlan",
+                table: "PlanesSesion",
+                columns: new[] { "Fecha", "Estado", "PlanId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PlanSesion_PlanFecha",
+                table: "PlanesSesion",
+                columns: new[] { "PlanId", "Fecha" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PlanSesion_PlanHorarioId",
+                table: "PlanesSesion",
+                column: "PlanHorarioId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_RolAccessPoints_AccessPointId",
                 table: "RolAccessPoints",
                 column: "AccessPointId");
@@ -596,6 +849,43 @@ namespace Atlas.Infrastructure.Migrations
                 column: "NormalizedName",
                 unique: true,
                 filter: "[NormalizedName] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ServiciosHorarios_Activo",
+                table: "ServicioHorarios",
+                column: "Activo");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ServiciosHorarios_EmpleadoId",
+                table: "ServicioHorarios",
+                column: "EmpleadoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ServiciosHorarios_Servicio_Empleado_Dia",
+                table: "ServicioHorarios",
+                columns: new[] { "ServicioId", "EmpleadoId", "DiaSemana" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ServiciosHorarios_ServicioId",
+                table: "ServicioHorarios",
+                column: "ServicioId");
+
+            migrationBuilder.CreateIndex(
+                name: "UK_ServiciosHorarios_Empleado_Dia_HoraInicio",
+                table: "ServicioHorarios",
+                columns: new[] { "EmpleadoId", "DiaSemana", "HoraInicio" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Servicios_Activo",
+                table: "Servicios",
+                column: "Activo");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Servicios_NombreServicio",
+                table: "Servicios",
+                column: "NomServicio",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Socios_Apellido_Nombre",
@@ -665,6 +955,9 @@ namespace Atlas.Infrastructure.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "Asistencias");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
 
             migrationBuilder.DropTable(
@@ -686,6 +979,12 @@ namespace Atlas.Infrastructure.Migrations
                 name: "RolAccessPoints");
 
             migrationBuilder.DropTable(
+                name: "ServicioHorarios");
+
+            migrationBuilder.DropTable(
+                name: "PlanesSesion");
+
+            migrationBuilder.DropTable(
                 name: "Usuarios");
 
             migrationBuilder.DropTable(
@@ -701,7 +1000,7 @@ namespace Atlas.Infrastructure.Migrations
                 name: "SYS_AccessPoint");
 
             migrationBuilder.DropTable(
-                name: "Planes");
+                name: "PlanesHorario");
 
             migrationBuilder.DropTable(
                 name: "Socios");
@@ -719,7 +1018,16 @@ namespace Atlas.Infrastructure.Migrations
                 name: "Menus");
 
             migrationBuilder.DropTable(
+                name: "Empleados");
+
+            migrationBuilder.DropTable(
+                name: "Planes");
+
+            migrationBuilder.DropTable(
                 name: "Periodicidades");
+
+            migrationBuilder.DropTable(
+                name: "Servicios");
         }
     }
 }

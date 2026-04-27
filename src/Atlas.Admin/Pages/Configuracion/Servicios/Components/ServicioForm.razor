@@ -1,0 +1,66 @@
+@using Atlas.Shared.Servicios
+
+<EditForm EditContext="_editContext" OnValidSubmit="HandleSubmit" autocomplete="off">
+    <FluentValidator />
+    <MudGrid>
+        <MudItem xs="12" sm="6">
+            <MudTextField Label="Nombre"
+                          @bind-Value="Model.NomServicio"
+                          For="@(() => Model.NomServicio)"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Class="mb-4" />
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudTextField Label="Descripción"
+                          @bind-Value="Model.Descripcion"
+                          For="@(() => Model.Descripcion)"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Class="mb-4" />
+        </MudItem>
+        <MudItem xs="12">
+            <MudSwitch @bind-Value="Model.Activo" Label="Activo" Color="Color.Primary" />
+        </MudItem>
+    </MudGrid>
+    <div class="mt-4">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" ButtonType="ButtonType.Submit" Class="mr-2" Disabled="IsSaving">
+            @if (IsSaving)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                <MudText Class="ms-2">Guardando...</MudText>
+            }
+            else
+            {
+                <MudText>Guardar</MudText>
+            }
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="OnCancel">Cancelar</MudButton>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter] public ServicioEditDto Model { get; set; } = new();
+    [Parameter] public EventCallback<ServicioEditDto> OnValidSubmit { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public bool IsSaving { get; set; }
+
+    private EditContext? _editContext;
+
+    protected override void OnInitialized()
+    {
+        _editContext = new EditContext(Model);
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (_editContext?.Model != Model)
+            _editContext = new EditContext(Model);
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (OnValidSubmit.HasDelegate)
+            await OnValidSubmit.InvokeAsync(Model);
+    }
+}

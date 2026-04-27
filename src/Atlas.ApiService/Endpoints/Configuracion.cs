@@ -62,6 +62,49 @@ public class Configuracion : EndpointGroupBase
             .Produces<ApiResponseDto>(StatusCodes.Status404NotFound)
             .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
             .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
+
+        // PlanHorario endpoints
+        group.MapGet("plan/{planId:int}/horario/", GetPlanHorariosByPlanId)
+            .WithName("GetPlanHorariosByPlanId")
+            .WithSummary("Obtiene los horarios de un plan")
+            .Produces<ApiResponseDto<List<PlanHorarioListItemDto>>>(StatusCodes.Status200OK)
+            .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
+            .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
+
+        group.MapGet("plan/horario/{id:int}", GetPlanHorarioById)
+            .WithName("GetPlanHorarioById")
+            .WithSummary("Obtiene un horario de plan por ID")
+            .Produces<ApiResponseDto<PlanHorarioEditDto>>(StatusCodes.Status200OK)
+            .Produces<ApiResponseDto>(StatusCodes.Status404NotFound)
+            .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
+            .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
+
+        group.MapPost("plan/{planId:int}/horario/", CreatePlanHorario)
+            .WithName("CreatePlanHorario")
+            .WithSummary("Crea un nuevo horario para un plan")
+            .Accepts<PlanHorarioEditDto>("application/json")
+            .Produces<ApiResponseDto<int>>(StatusCodes.Status200OK)
+            .Produces<ApiResponseDto>(StatusCodes.Status400BadRequest)
+            .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
+            .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
+
+        group.MapPut("plan/horario/{id:int}", UpdatePlanHorario)
+            .WithName("UpdatePlanHorario")
+            .WithSummary("Actualiza un horario de plan")
+            .Accepts<PlanHorarioEditDto>("application/json")
+            .Produces(StatusCodes.Status200OK)
+            .Produces<ApiResponseDto>(StatusCodes.Status404NotFound)
+            .Produces<ApiResponseDto>(StatusCodes.Status400BadRequest)
+            .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
+            .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
+
+        group.MapDelete("plan/horario/{id:int}", DeletePlanHorario)
+            .WithName("DeletePlanHorario")
+            .WithSummary("Elimina un horario de plan")
+            .Produces(StatusCodes.Status200OK)
+            .Produces<ApiResponseDto>(StatusCodes.Status404NotFound)
+            .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
+            .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
     }
 
     public async Task<IResult> GetPlanById(
@@ -79,7 +122,8 @@ public class Configuracion : EndpointGroupBase
         [FromQuery] int size = 10,
         [FromQuery] string sortColumn = nameof(PlanListItemDto.NomPlan),
         [FromQuery] bool sortDescending = false,
-        [FromQuery] int? periodicidadId = null
+        [FromQuery] int? periodicidadId = null,
+        [FromQuery] int? servicioId = null
         )
     {
         var result = await queryMediator.QueryAsync(new GetPlanesQuery
@@ -89,7 +133,8 @@ public class Configuracion : EndpointGroupBase
             PageSize = size,
             SortColumn = sortColumn,
             SortDescending = sortDescending,
-            PeriodicidadId = periodicidadId
+            PeriodicidadId = periodicidadId,
+            ServicioId = servicioId
         });
         return result.ToCustomMinimalApiResult();
     }
@@ -122,13 +167,58 @@ public class Configuracion : EndpointGroupBase
     public async Task<IResult> SearchPlanes(
         [FromServices] IQueryMediator queryMediator,
         [FromQuery] string? searchTerm = null,
-        [FromQuery] int maxResults = 10)
+        [FromQuery] int maxResults = 10,
+        [FromQuery] int? servicioId = null)
     {
         var result = await queryMediator.QueryAsync(new SearchPlanesQuery
         {
             SearchTerm = searchTerm,
-            MaxResults = maxResults
+            MaxResults = maxResults,
+            ServicioId = servicioId
         });
+        return result.ToCustomMinimalApiResult();
+    }
+
+    public async Task<IResult> GetPlanHorariosByPlanId(
+        [FromServices] IQueryMediator queryMediator,
+        [FromRoute] int planId)
+    {
+        var result = await queryMediator.QueryAsync(new GetPlanHorariosByPlanIdQuery { PlanId = planId });
+        return result.ToCustomMinimalApiResult();
+    }
+
+    public async Task<IResult> GetPlanHorarioById(
+        [FromServices] IQueryMediator queryMediator,
+        [FromRoute] int id)
+    {
+        var result = await queryMediator.QueryAsync(new GetPlanHorarioByIdQuery { Id = id });
+        return result.ToCustomMinimalApiResult();
+    }
+
+    public async Task<IResult> CreatePlanHorario(
+        [FromServices] ICommandMediator commandMediator,
+        [FromRoute] int planId,
+        [FromBody] PlanHorarioEditDto model)
+    {
+        model.PlanId = planId;
+        var result = await commandMediator.SendAsync(new CreatePlanHorarioCommand(model));
+        return result.ToCustomMinimalApiResult();
+    }
+
+    public async Task<IResult> UpdatePlanHorario(
+        [FromServices] ICommandMediator commandMediator,
+        [FromRoute] int id,
+        [FromBody] PlanHorarioEditDto model)
+    {
+        var result = await commandMediator.SendAsync(new UpdatePlanHorarioCommand { Id = id, Model = model });
+        return result.ToCustomMinimalApiResult();
+    }
+
+    public async Task<IResult> DeletePlanHorario(
+        [FromServices] ICommandMediator commandMediator,
+        [FromRoute] int id)
+    {
+        var result = await commandMediator.SendAsync(new DeletePlanHorarioCommand(id));
         return result.ToCustomMinimalApiResult();
     }
 }

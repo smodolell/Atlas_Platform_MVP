@@ -1,4 +1,4 @@
-﻿using Atlas.Client.Auth;
+using Atlas.Client.Auth;
 using Atlas.Client.Handlers;
 using Atlas.Client.Initializers;
 using Atlas.Client.Interfaces;
@@ -36,6 +36,8 @@ public static class ServiceCollectionExtensions
         AddAtlasRefitClient<ICatalogosApi>(services, apiBaseAddress);
         AddAtlasRefitClient<ISelectListsApi>(services, apiBaseAddress);
         AddAtlasRefitClient<IAsistenciasApi>(services, apiBaseAddress);
+        AddAtlasRefitClient<IEmpleadosApi>(services, apiBaseAddress);
+        AddAtlasRefitClient<IServiciosApi>(services, apiBaseAddress);
 
 
 

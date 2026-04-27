@@ -10,41 +10,39 @@
     <MudDrawerContainer>
         <MudGrid Spacing="2" Class="pa-4">
             <MudItem xs="12">
+                <MudSelect T="int?" Label="Servicio" @bind-Value="_servicioId" Variant="Variant.Outlined" Margin="Margin.Dense">
+                    <MudSelectItem T="int?" Value="@((int?)null)">[Todos]</MudSelectItem>
+                    @if (_listServicios != null)
+                    {
+                        @foreach (var item in _listServicios)
+                        {
+                            <MudSelectItem T="int?" Value="@((int?)Convert.ToInt32(item.Value))">@item.Text</MudSelectItem>
+                        }
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12">
                 <MudSelect T="int?" Label="Periodicidad" @bind-Value="_periodicidadId" Variant="Variant.Outlined" Margin="Margin.Dense">
-                    <MudSelectItem T="int?" Value="0">[Seleccione]</MudSelectItem>
+                    <MudSelectItem T="int?" Value="@((int?)null)">[Todas]</MudSelectItem>
                     @if (_listPeriodicidad != null)
                     {
                         @foreach (var item in _listPeriodicidad)
                         {
-                            <MudSelectItem T="int" Value="@Convert.ToInt32(item.Value)">@item.Text</MudSelectItem>
+                            <MudSelectItem T="int?" Value="@((int?)Convert.ToInt32(item.Value))">@item.Text</MudSelectItem>
                         }
                     }
                 </MudSelect>
-         </MudItem>
+            </MudItem>
             <MudItem xs="12">
                 <MudButtonGroup Size="Size.Small" Variant="Variant.Filled">
-                    <MudButton Color="Color.Secondary"
-                               OnClick="OnCancelFilter">
-                        Cancelar
-                    </MudButton>
-                    <MudButton StartIcon="@Icons.Material.Filled.Clear"
-                               OnClick="OnClearFilter"
-                               Disabled="_isLoading">
-                        Limpiar
-                    </MudButton>
-                    <MudButton Variant="Variant.Filled"
-                               StartIcon="@Icons.Material.Filled.Search"
-                               OnClick="RefreshData"
-                               Disabled="_isLoading">
-                        Filtrar
-                    </MudButton>
+                    <MudButton Color="Color.Secondary" OnClick="OnCancelFilter">Cancelar</MudButton>
+                    <MudButton StartIcon="@Icons.Material.Filled.Clear" OnClick="OnClearFilter" Disabled="_isLoading">Limpiar</MudButton>
+                    <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Search" OnClick="RefreshData" Disabled="_isLoading">Filtrar</MudButton>
                 </MudButtonGroup>
             </MudItem>
         </MudGrid>
     </MudDrawerContainer>
 </MudDrawer>
-
- 
 
 <MudDataGrid T="PlanListItemDto"
              Outlined="true"
@@ -59,24 +57,21 @@
     <ToolBarContent>
         <MudText Typo="Typo.h6">Listados de Planes</MudText>
         <MudSpacer />
-       <MudStack Row="true" AlignItems="AlignItems.End" Spacing="1">
+        <MudStack Row="true" AlignItems="AlignItems.End" Spacing="1">
             <MudTextField T="string"
                           ValueChanged="@(s => OnSearch(s))"
-                          Placeholder="Buscar por identificador, nombre o apellido..."
+                          Placeholder="Buscar por nombre o descripción..."
                           Adornment="Adornment.Start"
                           Clearable="true"
                           Class="flex-grow-0"
                           AdornmentIcon="@Icons.Material.Filled.Search"
-                          IconSize="Size.Small">
-            </MudTextField>
-                 <MudIconButton Icon="@Icons.Material.Outlined.FilterAlt"
+                          IconSize="Size.Small" />
+            <MudIconButton Icon="@Icons.Material.Outlined.FilterAlt"
                            Class="align-self-end pa-1"
                            Size="Size.Medium"
-                           OnClick="OnFilterClicked" /> 
-        </MudStack> 
+                           OnClick="OnFilterClicked" />
+        </MudStack>
         <MudStack Row="true" AlignItems="AlignItems.Start" Spacing="2">
-          
-      
             <MudTooltip Text="Actualizar">
                 <MudIconButton Icon="@Icons.Material.Outlined.Refresh"
                                Size="Size.Small"
@@ -84,25 +79,44 @@
                                OnClick="RefreshData"
                                Disabled="_isLoading" />
             </MudTooltip>
-            <MudTooltip Text="Agregar Cliente">
+            <MudTooltip Text="Nuevo Plan">
                 <MudButton Variant="Variant.Filled"
                            Size="Size.Small"
                            Color="Color.Primary"
-                           StartIcon="@Icons.Material.Outlined.PersonAdd"
+                           StartIcon="@Icons.Material.Outlined.Add"
                            OnClick="AddClick"
                            Disabled="_isLoading">
-                    Nuevo Producto
+                    Nuevo Plan
                 </MudButton>
             </MudTooltip>
         </MudStack>
     </ToolBarContent>
     <Columns>
-        <PropertyColumn Property="x => x.NomPlan" Title="Nombre" StickyLeft="true" />
-        <PropertyColumn Property="x => x.Descripcion" Title="Descripción" />
-        <PropertyColumn Property="x => x.Precio" Title="Precio" />
+        <PropertyColumn Property="x => x.NomServicio" Title="Servicio" StickyLeft="true" />
+        <PropertyColumn Property="x => x.NomPlan" Title="Nombre" />
+     
+        @* <PropertyColumn Property="x => x.Descripcion" Title="Descripción" /> *@
+        <TemplateColumn Title="Precio" SortBy="x => x.Precio">
+            <CellTemplate>
+                <MudText>@context.Item.Precio.ToString("C2")</MudText>
+            </CellTemplate>
+        </TemplateColumn>
         <PropertyColumn Property="x => x.NomPeriodicidad" Title="Periodicidad" />
         <PropertyColumn Property="x => x.CupoMaximo" Title="Cupo Máximo" />
-        <TemplateColumn Title="Activo" SortBy="x => x.Activo">
+        <TemplateColumn Title="Tipo">
+            <CellTemplate>
+                @{
+                    var (label, color) = context.Item switch
+                    {
+                        { EsProgramado: true } => ("Programado", Color.Info),
+                        { EsTicket: true } => ("Ticket", Color.Warning),
+                        _ => ("Libre", Color.Default)
+                    };
+                }
+                <MudChip T="string" Color="color" Size="Size.Small" Variant="Variant.Outlined">@label</MudChip>
+            </CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn Title="Estado" SortBy="x => x.Activo">
             <CellTemplate>
                 <MudChip T="string"
                          Color="@(context.Item.Activo ? Color.Success : Color.Error)"
@@ -128,39 +142,31 @@
                                        OnClick="@(() => ConfirmDelete(context.Item))" />
                     </MudTooltip>
                 </MudStack>
-
-             
             </CellTemplate>
         </TemplateColumn>
     </Columns>
-    <NoRecordsContent>
-        <MudText>No se encontraron productos.</MudText>
-    </NoRecordsContent>
-    <LoadingContent>
-        <MudText>Cargando...</MudText>
-    </LoadingContent>
+    <NoRecordsContent><MudText>No se encontraron planes.</MudText></NoRecordsContent>
+    <LoadingContent><MudText>Cargando...</MudText></LoadingContent>
 </MudDataGrid>
+
 @code {
     private MudDataGrid<PlanListItemDto> _dataGridRef = null!;
     private string? _searchText;
     private int? _periodicidadId;
+    private int? _servicioId;
     private List<SelectListItemDto>? _listPeriodicidad;
+    private List<SelectListItemDto>? _listServicios;
     private bool _isLoading;
-    private int _currentPage = 1;
-    private int _totalPages = 1;
-    private int _totalCount;
-    private const int PageSize = 10;
     private bool _openFilter;
-
-    
 
     protected override async Task OnInitializedAsync()
     {
-        if (_listPeriodicidad == null)
-        {
-            _listPeriodicidad = (await _selectListsApi.GetPeriodicidadSelectListAsync()).Data!;
-        }
+        await Task.WhenAll(
+            _selectListsApi.GetPeriodicidadSelectListAsync().ContinueWith(t => _listPeriodicidad = t.Result.Data),
+            _selectListsApi.GetServicioSelectListAsync().ContinueWith(t => _listServicios = t.Result.Data)
+        );
     }
+
     private async Task<GridData<PlanListItemDto>> GetTableData(GridState<PlanListItemDto> gridState, CancellationToken cancellationToken)
     {
         try
@@ -168,19 +174,15 @@
             _isLoading = true;
             StateHasChanged();
 
-            var _pageNumber = (gridState.Page + 1);
-            var _sortBy = nameof(PlanListItemDto.NomPlan);
-            var _sortDescending = true;
-            var _sortDefinitions = gridState.SortDefinitions.FirstOrDefault();
-            if (_sortDefinitions != null)
-            {
-                _sortBy = _sortDefinitions.SortBy;
-                _sortDescending = _sortDefinitions.Descending;
-            }
-            var paginatedList = await _configuracionApi.GetPlanesAsync(_searchText,
-                _pageNumber,
-                gridState.PageSize, _sortBy, _sortDescending, _periodicidadId);
-            return new GridData<PlanListItemDto>()
+            var sortDef = gridState.SortDefinitions.FirstOrDefault();
+            var sortBy = sortDef?.SortBy ?? nameof(PlanListItemDto.NomPlan);
+            var sortDesc = sortDef?.Descending ?? false;
+
+            var paginatedList = await _configuracionApi.GetPlanesAsync(
+                _searchText, gridState.Page + 1, gridState.PageSize,
+                sortBy, sortDesc, _periodicidadId, _servicioId);
+
+            return new GridData<PlanListItemDto>
             {
                 TotalItems = paginatedList.Data!.TotalCount,
                 Items = paginatedList.Data!.Results
@@ -188,8 +190,8 @@
         }
         catch (Exception ex)
         {
-            _snackbarService.Add($"Error al cargar clientes: {ex.Message}", Severity.Error);
-            return new GridData<PlanListItemDto>() { TotalItems = 0, Items = Enumerable.Empty<PlanListItemDto>() };
+            _snackbarService.Add($"Error al cargar planes: {ex.Message}", Severity.Error);
+            return new GridData<PlanListItemDto> { TotalItems = 0, Items = Enumerable.Empty<PlanListItemDto>() };
         }
         finally
         {
@@ -198,74 +200,51 @@
         }
     }
 
-    private void AddClick()
-    {
-        _navManager.NavigateTo(PageRoute.NewPlanPage);
-    }
+    private void AddClick() => _navManager.NavigateTo(PageRoute.NewPlanPage);
 
-    private void EditClick(int id)
-    {
-        _navManager.NavigateTo($"{PageRoute.EditPlanPage}/{id}");
-    }
+    private void EditClick(int id) => _navManager.NavigateTo($"{PageRoute.EditPlanPage}/{id}");
 
     private async Task ConfirmDelete(PlanListItemDto producto)
     {
         var confirm = await _dialogService.ShowMessageBoxAsync(
             "Confirmar eliminación",
-            $"¿Deseas eliminar el producto \"{producto.NomPlan}\"? Esta acción no se puede deshacer.",
-            yesText: "Eliminar",
-            cancelText: "Cancelar",
+            $"¿Deseas eliminar el plan \"{producto.NomPlan}\"? Esta acción no se puede deshacer.",
+            yesText: "Eliminar", cancelText: "Cancelar",
             options: new DialogOptions { MaxWidth = MaxWidth.ExtraSmall });
 
         if (confirm == true)
-            await DeleteProducto((int)producto.Id);
+            await DeletePlan(producto.Id);
     }
 
-    private async Task DeleteProducto(int id)
+    private async Task DeletePlan(int id)
     {
-        // try
-        // {
-        //     await _configuracionApi.DeleteProductoAsync(id);
-        //     _snackbarService.Add("Producto eliminado correctamente", Severity.Success);
-        //     if (_productos.Count == 1 && _currentPage > 1)
-        //         _currentPage--;
-        //     await LoadData();
-        // }
-        // catch (Exception ex)
-        // {
-        //     _snackbarService.Add($"Error al eliminar: {ex.Message}", Severity.Error);
-        // }
+        // TODO: implementar cuando el endpoint de borrar plan esté listo
+        await Task.CompletedTask;
     }
 
     private async Task RefreshData()
     {
         if (_dataGridRef != null)
-        {
             await _dataGridRef.ReloadServerData();
-        }
-    }
-    private async Task ApplyFilters()
-    {
-        _openFilter = false;
-        await RefreshData();
     }
 
     private async Task OnClearFilter()
     {
         _searchText = null;
         _periodicidadId = null;
-        await RefreshData();
+        _servicioId = null;
         _openFilter = false;
+        await RefreshData();
     }
-    private void OnFilterClicked()
-    {
-        _openFilter = true;
-    }
+
+    private void OnFilterClicked() => _openFilter = true;
+
     private async Task OnCancelFilter()
     {
-        await RefreshData();
         _openFilter = false;
+        await RefreshData();
     }
+
     private async Task OnSearch(string? text)
     {
         _searchText = text;

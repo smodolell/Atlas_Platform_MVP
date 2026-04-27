@@ -1,0 +1,17 @@
+@attribute [Route(PageRoute.ServiciosPage)]
+@attribute [AccessPoint(AppMenu.MenuConfiguracion, "Servicios")]
+@using Atlas.Admin.Pages.Configuracion.Servicios.Components
+
+<PageHeader Title="Servicios" Icon="@AppMenu.MenuConfiguracionIcon">
+    <MudBreadcrumbs Items="_breadcrumbItems"></MudBreadcrumbs>
+</PageHeader>
+
+<ServicioList />
+
+@code {
+    private readonly List<BreadcrumbItem> _breadcrumbItems =
+    [
+        new BreadcrumbItem("Inicio", href: "/"),
+        new BreadcrumbItem("Servicios", href: null, disabled: true)
+    ];
+}

@@ -1,0 +1,16 @@
+@attribute [Route(PageRoute.EmpleadosPage)]
+@attribute [AccessPoint(AppMenu.MenuEmpleados, "Empleados")]
+@using Atlas.Admin.Pages.Empleados.Components
+
+<PageHeader Title="Empleados" Icon="@AppMenu.MenuEmpleadosIcon">
+    <MudBreadcrumbs Items="_breadcrumbItems"></MudBreadcrumbs>
+</PageHeader>
+<EmpleadoList />
+
+@code {
+    private readonly List<BreadcrumbItem> _breadcrumbItems = new()
+    {
+        new BreadcrumbItem("Inicio", href: "/"),
+        new BreadcrumbItem("Empleados", href: null, disabled: true)
+    };
+}

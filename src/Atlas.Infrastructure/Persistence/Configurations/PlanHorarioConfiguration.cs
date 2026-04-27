@@ -43,7 +43,7 @@ public class PlanHorarioConfiguration : IEntityTypeConfiguration<PlanHorario>
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(ph => ph.Empleado)
-            .WithMany(e => e.Horarios)
+            .WithMany(e => e.PlanHorarios)
             .HasForeignKey(ph => ph.EmpleadoId)
             .OnDelete(DeleteBehavior.Restrict);
 

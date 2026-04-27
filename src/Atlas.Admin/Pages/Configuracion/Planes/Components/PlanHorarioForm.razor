@@ -1,0 +1,137 @@
+@using Atlas.Shared.Configuracion
+@inject ISelectListsApi _selectListsApi
+
+<MudDialog>
+    <DialogContent>
+        <EditForm Model="@Model" OnValidSubmit="Submit" autocomplete="off">
+            <FluentValidator />
+            <MudGrid Spacing="2">
+                <MudItem xs="12">
+                    @if (_listEmpleados == null)
+                    {
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="56px" />
+                    }
+                    else
+                    {
+                        <MudSelect T="int"
+                                   Label="Instructor"
+                                   @bind-Value="Model.EmpleadoId"
+                                   For="@(() => Model.EmpleadoId)"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense">
+                            <MudSelectItem T="int" Value="0">[Seleccione instructor]</MudSelectItem>
+                            @foreach (var item in _listEmpleados)
+                            {
+                                <MudSelectItem T="int" Value="@int.Parse(item.Value)">@item.Text</MudSelectItem>
+                            }
+                        </MudSelect>
+                    }
+                </MudItem>
+                <MudItem xs="12">
+                    <MudSelect T="DayOfWeek"
+                               Label="Día de la semana"
+                               @bind-Value="Model.DiaSemana"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense">
+                        @foreach (var dia in _diasSemana)
+                        {
+                            <MudSelectItem T="DayOfWeek" Value="@dia.Key">@dia.Value</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTimePicker Label="Hora de inicio"
+                                   Time="_horaInicio"
+                                   TimeChanged="OnHoraInicioChanged"
+                                   AmPm="false"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTimePicker Label="Hora de fin"
+                                   Time="_horaFin"
+                                   TimeChanged="OnHoraFinChanged"
+                                   AmPm="false"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudSwitch @bind-Value="Model.Activo" Label="Activo" Color="Color.Primary" />
+                </MudItem>
+            </MudGrid>
+            <div class="mt-4 d-flex justify-end gap-2">
+                <MudButton OnClick="Cancel">Cancelar</MudButton>
+                <MudButton Color="Color.Primary" Variant="Variant.Filled" ButtonType="ButtonType.Submit" Disabled="_isSubmitting">
+                    @if (_isSubmitting)
+                    {
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                        <MudText Class="ms-2">Guardando</MudText>
+                    }
+                    else
+                    {
+                        <MudText>Guardar</MudText>
+                    }
+                </MudButton>
+            </div>
+        </EditForm>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter]
+    public PlanHorarioEditDto Model { get; set; } = new();
+
+    private bool _isSubmitting;
+    private List<SelectListItemDto>? _listEmpleados;
+
+    private TimeSpan? _horaInicio;
+    private TimeSpan? _horaFin;
+
+    private static readonly Dictionary<DayOfWeek, string> _diasSemana = new()
+    {
+        { DayOfWeek.Monday, "Lunes" },
+        { DayOfWeek.Tuesday, "Martes" },
+        { DayOfWeek.Wednesday, "Miércoles" },
+        { DayOfWeek.Thursday, "Jueves" },
+        { DayOfWeek.Friday, "Viernes" },
+        { DayOfWeek.Saturday, "Sábado" },
+        { DayOfWeek.Sunday, "Domingo" }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        _horaInicio = Model.HoraInicio.ToTimeSpan();
+        _horaFin = Model.HoraFin.ToTimeSpan();
+        _listEmpleados = (await _selectListsApi.GetEmpleadoSelectListAsync()).Data;
+    }
+
+    private void OnHoraInicioChanged(TimeSpan? value)
+    {
+        _horaInicio = value;
+        Model.HoraInicio = value.HasValue ? TimeOnly.FromTimeSpan(value.Value) : new TimeOnly(0, 0);
+    }
+
+    private void OnHoraFinChanged(TimeSpan? value)
+    {
+        _horaFin = value;
+        Model.HoraFin = value.HasValue ? TimeOnly.FromTimeSpan(value.Value) : new TimeOnly(0, 0);
+    }
+
+    private async Task Submit()
+    {
+        _isSubmitting = true;
+        try
+        {
+            MudDialog.Close(DialogResult.Ok(Model));
+            await Task.CompletedTask;
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

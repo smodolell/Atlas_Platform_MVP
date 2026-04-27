@@ -12,7 +12,7 @@
                  Variant="Variant.Outlined"
                  Margin="Margin.Dense"
                  DebounceInterval="300"
-                 MinCharacters="2"
+                 MinCharacters="0"
                  MaxItems="10"
                  ResetValueOnEmptyText="true"
                  Required="@Required"
@@ -50,21 +50,21 @@
     public int MaxResults { get; set; } = 10;
 
     [Parameter]
+    public int? ServicioId { get; set; }
+
+    [Parameter]
     public EventCallback<PlanSearchDto?> OnPlanSelected { get; set; }
 
     private CancellationTokenSource? _cancellationTokenSource;
 
     private async Task<IEnumerable<PlanSearchDto>> SearchPlanes(string value, CancellationToken token)
     {
-        if (string.IsNullOrWhiteSpace(value) || value.Length < 2)
-            return Array.Empty<PlanSearchDto>();
-
         try
         {
             _cancellationTokenSource?.Cancel();
             _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(token);
 
-            var response = await ConfiguracionApi.SearchPlanesAsync(value, MaxResults, _cancellationTokenSource.Token);
+            var response = await ConfiguracionApi.SearchPlanesAsync(value, MaxResults, ServicioId, _cancellationTokenSource.Token);
 
             if (response.Success && response.Data != null)
                 return response.Data;

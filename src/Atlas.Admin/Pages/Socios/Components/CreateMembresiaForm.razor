@@ -1,5 +1,6 @@
 @using Atlas.Shared.Socios
 @using Atlas.Shared.Configuracion
+@using Atlas.Shared.Servicios
 @using Atlas.Admin.Shared.Autocomplete
 @inject ISociosApi SociosApi
 
@@ -57,10 +58,15 @@
     <!-- Columna derecha: Plan -->
     <MudItem xs="12" md="6">
         <MudStack Spacing="3">
+            <AutocompleteServicio @bind-SelectedServicio="_servicioSeleccionado"
+                                  Label="Filtrar por Servicio"
+                                  OnServicioSelected="OnServicioChanged" />
+
             <AutocompletePlan @bind-SelectedPlan="_planSeleccionado"
                               Label="Buscar Plan"
                               Required="true"
-                              RequiredError="Debe seleccionar un plan" />
+                              RequiredError="Debe seleccionar un plan"
+                              ServicioId="@(_servicioSeleccionado?.Id)" />
 
             @if (_planSeleccionado != null)
             {
@@ -164,6 +170,7 @@
     public EventCallback OnSuccess { get; set; }
 
     private SocioSearchDto? _socioSeleccionado;
+    private ServicioSearchDto? _servicioSeleccionado;
     private PlanSearchDto? _planSeleccionado;
     private bool _isSubmitting;
 
@@ -207,9 +214,15 @@
         }
     }
 
+    private void OnServicioChanged(ServicioSearchDto? servicio)
+    {
+        _planSeleccionado = null;
+    }
+
     private void ResetForm()
     {
         _socioSeleccionado = null;
+        _servicioSeleccionado = null;
         _planSeleccionado = null;
         _model.SocioId = Guid.Empty;
         _model.ProductoId = 0;

@@ -22,10 +22,14 @@ internal class GetPlanByIdQueryHandler(IAtlasDbContext context)
             var dto = new PlanEditDto
             {
                 NomPlan = plan.NomPlan,
+                ServicioId = plan.ServicioId,
                 PeriodicidadId = plan.PeriodicidadId,
                 Descripcion = plan.Descripcion,
                 Precio = plan.Precio,
                 CupoMaximo = plan.CupoMaximo,
+                EsLibre = plan.EsLibre,
+                EsProgramado = plan.EsProgramado,
+                EsTicket = plan.EsTicket,
                 Activo = plan.Activo
             };
 

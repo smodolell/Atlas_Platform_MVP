@@ -1,0 +1,189 @@
+@using Atlas.Shared.Configuracion
+
+@inject IConfiguracionApi _configuracionApi
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+    <MudText Typo="Typo.h6">Horarios del Plan</MudText>
+    <MudTooltip Text="Agregar Horario">
+        <MudButton Variant="Variant.Filled"
+                   Size="Size.Small"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Outlined.Add"
+                   OnClick="AddClick"
+                   Disabled="_isLoading">
+            Nuevo Horario
+        </MudButton>
+    </MudTooltip>
+</MudStack>
+
+@if (_isLoading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (_horarios == null || _horarios.Count == 0)
+{
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+        No hay horarios configurados para este plan.
+    </MudAlert>
+}
+else
+{
+    <MudTable Items="_horarios" Dense="true" Bordered="true" Striped="true" Outlined="true">
+        <HeaderContent>
+            <MudTh>Día</MudTh>
+            <MudTh>Instructor</MudTh>
+            <MudTh>Hora Inicio</MudTh>
+            <MudTh>Hora Fin</MudTh>
+            <MudTh>Estado</MudTh>
+            <MudTh Style="text-align:right">Acciones</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@GetNombreDia(context.DiaSemana)</MudTd>
+            <MudTd>@context.NomEmpleado</MudTd>
+            <MudTd>@context.HoraInicio.ToString("HH:mm")</MudTd>
+            <MudTd>@context.HoraFin.ToString("HH:mm")</MudTd>
+            <MudTd>
+                <MudChip T="string"
+                         Color="@(context.Activo ? Color.Success : Color.Error)"
+                         Size="Size.Small"
+                         Variant="Variant.Filled">
+                    @(context.Activo ? "Activo" : "Inactivo")
+                </MudChip>
+            </MudTd>
+            <MudTd Style="text-align:right">
+                <MudStack Row="true" Justify="Justify.FlexEnd">
+                    <MudTooltip Text="Editar">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                       Color="Color.Primary"
+                                       Size="Size.Small"
+                                       OnClick="@(() => EditClick(context))" />
+                    </MudTooltip>
+                    <MudTooltip Text="Eliminar">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                       Color="Color.Error"
+                                       Size="Size.Small"
+                                       OnClick="@(() => DeleteClick(context))" />
+                    </MudTooltip>
+                </MudStack>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public int PlanId { get; set; }
+
+    private List<PlanHorarioListItemDto>? _horarios;
+    private bool _isLoading;
+
+    private static readonly Dictionary<DayOfWeek, string> _diasSemana = new()
+    {
+        { DayOfWeek.Monday, "Lunes" },
+        { DayOfWeek.Tuesday, "Martes" },
+        { DayOfWeek.Wednesday, "Miércoles" },
+        { DayOfWeek.Thursday, "Jueves" },
+        { DayOfWeek.Friday, "Viernes" },
+        { DayOfWeek.Saturday, "Sábado" },
+        { DayOfWeek.Sunday, "Domingo" }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadHorarios();
+    }
+
+    private async Task LoadHorarios()
+    {
+        _isLoading = true;
+        try
+        {
+            var response = await _configuracionApi.GetPlanHorariosByPlanIdAsync(PlanId);
+            _horarios = response.Data ?? new List<PlanHorarioListItemDto>();
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error al cargar horarios: {ex.Message}", Severity.Error);
+            _horarios = new List<PlanHorarioListItemDto>();
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task AddClick()
+    {
+        var model = new PlanHorarioEditDto { PlanId = PlanId, Activo = true };
+        var parameters = new DialogParameters { ["Model"] = model };
+        var dialog = await _dialogService.ShowAsync<PlanHorarioForm>("Nuevo Horario", parameters,
+            new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled && result.Data is PlanHorarioEditDto saved)
+        {
+            try
+            {
+                await _configuracionApi.CreatePlanHorarioAsync(PlanId, saved);
+                _snackbarService.Add("Horario creado correctamente.", Severity.Success);
+                await LoadHorarios();
+            }
+            catch (Exception ex)
+            {
+                _snackbarService.Add($"Error al crear horario: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private async Task EditClick(PlanHorarioListItemDto item)
+    {
+        try
+        {
+            var response = await _configuracionApi.GetPlanHorarioByIdAsync(item.Id);
+            if (response.Data == null) return;
+
+            var parameters = new DialogParameters { ["Model"] = response.Data };
+            var dialog = await _dialogService.ShowAsync<PlanHorarioForm>("Editar Horario", parameters,
+                new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+            var result = await dialog.Result;
+
+            if (result != null && !result.Canceled && result.Data is PlanHorarioEditDto saved)
+            {
+                await _configuracionApi.UpdatePlanHorarioAsync(item.Id, saved);
+                _snackbarService.Add("Horario actualizado correctamente.", Severity.Success);
+                await LoadHorarios();
+            }
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error al editar horario: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DeleteClick(PlanHorarioListItemDto item)
+    {
+        bool? confirm = await _dialogService.ShowMessageBoxAsync(
+            "Confirmar eliminación",
+            $"¿Deseas eliminar el horario del {GetNombreDia(item.DiaSemana)} ({item.HoraInicio:HH\\:mm} - {item.HoraFin:HH\\:mm})?",
+            yesText: "Eliminar",
+            cancelText: "Cancelar",
+            options: new DialogOptions { MaxWidth = MaxWidth.ExtraSmall });
+
+        if (confirm == true)
+        {
+            try
+            {
+                await _configuracionApi.DeletePlanHorarioAsync(item.Id);
+                _snackbarService.Add("Horario eliminado correctamente.", Severity.Success);
+                await LoadHorarios();
+            }
+            catch (Exception ex)
+            {
+                _snackbarService.Add($"Error al eliminar horario: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private string GetNombreDia(DayOfWeek dia) =>
+        _diasSemana.TryGetValue(dia, out var nombre) ? nombre : dia.ToString();
+}

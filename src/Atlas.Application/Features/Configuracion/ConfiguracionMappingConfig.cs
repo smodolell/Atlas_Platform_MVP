@@ -7,7 +7,8 @@ public class ConfiguracionMappingConfig : IRegister
     public void Register(TypeAdapterConfig config)
     {
         config.NewConfig<Plan,PlanListItemDto>()
-            .Map(o => o.NomPeriodicidad, d => d.Periodicidad.NomPeriodicidad);
+            .Map(o => o.NomPeriodicidad, d => d.Periodicidad.NomPeriodicidad)
+            .Map(o => o.NomServicio, d => d.Servicio.NomServicio);
 
     }
 }

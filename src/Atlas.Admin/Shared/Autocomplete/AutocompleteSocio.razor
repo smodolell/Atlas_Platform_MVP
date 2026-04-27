@@ -12,7 +12,7 @@
                  Variant="Variant.Outlined"
                  Margin="Margin.Dense"
                  DebounceInterval="300"
-                 MinCharacters="2"
+                 MinCharacters="0"
                  MaxItems="10"
                  ResetValueOnEmptyText="true"
                  Required="@Required"
@@ -20,7 +20,7 @@
                  Disabled="@Disabled">
     <ItemTemplate>
         <MudText>
-            @context.Nombre
+            @GetSocioText(context)
         </MudText>
     </ItemTemplate>
     <NoItemsTemplate>
@@ -58,9 +58,6 @@
 
     private async Task<IEnumerable<SocioSearchDto>> SearchSocios(string value, CancellationToken token)
     {
-        if (string.IsNullOrWhiteSpace(value) || value.Length < 2)
-            return Array.Empty<SocioSearchDto>();
-
         try
         {
             // Cancelar búsqueda anterior
@@ -91,7 +88,9 @@
 
     private string GetSocioText(SocioSearchDto? socio)
     {
-        return socio?.Nombre ?? string.Empty;
+        if(socio == null)
+            return string.Empty;
+        return $"{socio?.Nombre ?? string.Empty}, {socio?.Apellido ?? string.Empty} ({socio?.DNI ?? string.Empty})";
     }
 
     private async Task OnSelectedValueChanged(SocioSearchDto? value)

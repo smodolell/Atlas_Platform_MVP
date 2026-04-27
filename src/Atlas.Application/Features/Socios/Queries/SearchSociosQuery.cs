@@ -15,13 +15,7 @@ internal class SearchSociosQueryHandler(IAtlasDbContext context) : IQueryHandler
 
     public async Task<Result<List<SocioSearchDto>>> HandleAsync(SearchSociosQuery request, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(request.SearchTerm) || request.SearchTerm.Length < 2)
-        {
-            return new List<SocioSearchDto>();
-        }
-
-        var searchTerm = request.SearchTerm.Trim().ToLower();
-        var maxResults = Math.Min(request.MaxResults, 20); // Máximo 20 resultados
+        var maxResults = Math.Min(request.MaxResults, 20);
 
         var spec = new SociosSpec(request.SearchTerm);
         var query = _context.Socios

@@ -20,7 +20,23 @@
                           Margin="Margin.Dense"
                           Class="mb-4" />
         </MudItem>
-        <MudItem xs="12" sm="12" md="6">
+        <MudItem xs="12" sm="6">
+            @if (_listServicios == null)
+            {
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="40px" />
+            }
+            else
+            {
+                <MudSelect T="int" Label="Servicio" @bind-Value="Model.ServicioId" Variant="Variant.Outlined" Margin="Margin.Dense">
+                    <MudSelectItem T="int" Value="0">[Seleccione]</MudSelectItem>
+                    @foreach (var item in _listServicios)
+                    {
+                        <MudSelectItem T="int" Value="@Convert.ToInt32(item.Value)">@item.Text</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+        </MudItem>
+        <MudItem xs="12" sm="6">
             @if (_listPeriodicidad == null)
             {
                 <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="40px" />
@@ -54,6 +70,14 @@
                              Margin="Margin.Dense"
                              Step="1"
                              Class="mb-4" />
+        </MudItem>
+        <MudItem xs="12">
+            <MudText Typo="Typo.subtitle2" Class="mb-1">Tipo de plan</MudText>
+            <MudRadioGroup T="string" Value="_tipoPlan" ValueChanged="OnTipoPlanChanged">
+                <MudRadio T="string" Value="@("libre")" Color="Color.Primary">Libre</MudRadio>
+                <MudRadio T="string" Value="@("programado")" Color="Color.Primary">Programado</MudRadio>
+                <MudRadio T="string" Value="@("ticket")" Color="Color.Primary">Ticket</MudRadio>
+            </MudRadioGroup>
         </MudItem>
         <MudItem xs="12" sm="6">
             <MudSwitch @bind-Value="Model.Activo" Label="Activo" Color="Color.Primary" />
@@ -92,7 +116,8 @@
     private EditContext? _editContext;
     private ValidationMessageStore? _messageStore;
     private List<SelectListItemDto>? _listPeriodicidad;
-
+    private List<SelectListItemDto>? _listServicios;
+    private string _tipoPlan = "libre";
 
     protected override async Task OnInitializedAsync()
     {
@@ -100,12 +125,16 @@
         _messageStore = new ValidationMessageStore(_editContext);
         _editContext.OnFieldChanged += (s, e) => _messageStore.Clear(e.FieldIdentifier);
 
-        if (_listPeriodicidad== null)
-        {
-            _listPeriodicidad = (await _selectListsApi.GetPeriodicidadSelectListAsync()).Data!;
-        }
+        var tareas = new List<Task>();
+        if (_listPeriodicidad == null)
+            tareas.Add(_selectListsApi.GetPeriodicidadSelectListAsync().ContinueWith(t => _listPeriodicidad = t.Result.Data));
+        if (_listServicios == null)
+            tareas.Add(_selectListsApi.GetServicioSelectListAsync().ContinueWith(t => _listServicios = t.Result.Data));
+        await Task.WhenAll(tareas);
+
+        SyncTipoPlanFromModel();
     }
-    
+
     protected override void OnParametersSet()
     {
         if (_editContext != null && _editContext.Model != Model)
@@ -114,6 +143,22 @@
             _messageStore = new ValidationMessageStore(_editContext);
             _editContext.OnFieldChanged += (s, e) => _messageStore.Clear(e.FieldIdentifier);
         }
+        SyncTipoPlanFromModel();
+    }
+
+    private void SyncTipoPlanFromModel()
+    {
+        if (Model.EsProgramado) _tipoPlan = "programado";
+        else if (Model.EsTicket) _tipoPlan = "ticket";
+        else _tipoPlan = "libre";
+    }
+
+    private void OnTipoPlanChanged(string value)
+    {
+        _tipoPlan = value;
+        Model.EsLibre = value == "libre";
+        Model.EsProgramado = value == "programado";
+        Model.EsTicket = value == "ticket";
     }
 
     private async Task HandleSubmit()

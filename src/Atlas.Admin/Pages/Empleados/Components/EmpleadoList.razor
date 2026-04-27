@@ -1,0 +1,221 @@
+@using Atlas.Shared.Empleados
+@using Atlas.Client.Services
+@inject IEmpleadosApi _empleadosApi
+
+<MudDataGrid T="EmpleadoListItemDto"
+             Outlined="true"
+             Dense="true"
+             Bordered="true"
+             ServerData="GetTableData"
+             FixedHeader="true"
+             SortMode="SortMode.Single"
+             @ref="_dataGridRef"
+             Loading="_isLoading"
+             Striped="true">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Listado de Empleados</MudText>
+        <MudSpacer />
+        <MudStack Row="true" AlignItems="AlignItems.End" Spacing="1">
+            <MudTextField T="string"
+                          ValueChanged="@(s => OnSearch(s))"
+                          Placeholder="Buscar por nombre o apellido..."
+                          Adornment="Adornment.Start"
+                          Clearable="true"
+                          Class="flex-grow-0"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          IconSize="Size.Small">
+            </MudTextField>
+        </MudStack>
+        <MudStack Row="true" AlignItems="AlignItems.Start" Spacing="2" Class="ml-4">
+            <MudTooltip Text="Actualizar">
+                <MudIconButton Icon="@Icons.Material.Outlined.Refresh"
+                               Size="Size.Small"
+                               Color="Color.Info"
+                               OnClick="RefreshData"
+                               Disabled="_isLoading" />
+            </MudTooltip>
+            <MudTooltip Text="Agregar Empleado">
+                <MudButton Variant="Variant.Filled"
+                           Size="Size.Small"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Outlined.PersonAdd"
+                           OnClick="AddClick"
+                           Disabled="_isLoading">
+                    Nuevo Empleado
+                </MudButton>
+            </MudTooltip>
+        </MudStack>
+    </ToolBarContent>
+    <Columns>
+        <PropertyColumn Property="x => x.Id" Title="ID" />
+        <PropertyColumn Property="x => x.Nombre" Title="Nombre" />
+        <PropertyColumn Property="x => x.Apellido" Title="Apellido" />
+        
+        <TemplateColumn Title="Acciones" CellClass="d-flex justify-end" StickyRight="true">
+            <CellTemplate>
+                <MudStack Row="true" Justify="Justify.FlexEnd">
+                    <MudTooltip Text="Editar">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                       Color="Color.Primary"
+                                       Size="Size.Small"
+                                       OnClick="@(() => DetailClick(context.Item.Id))" />
+                    </MudTooltip>
+                    <MudTooltip Text="Eliminar">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                       Color="Color.Error"
+                                       Size="Size.Small"
+                                       OnClick="@(() => DeleteClick(context.Item))" />
+                    </MudTooltip>
+                </MudStack>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <NoRecordsContent>
+        <MudText>No se encontraron empleados.</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudText>Cargando...</MudText>
+    </LoadingContent>
+</MudDataGrid>
+
+@code {
+    private MudDataGrid<EmpleadoListItemDto> _dataGridRef = null!;
+    private bool _isLoading;
+    private string? _searchText;
+
+    private async Task<GridData<EmpleadoListItemDto>> GetTableData(GridState<EmpleadoListItemDto> gridState, CancellationToken cancellationToken)
+    {
+        try
+        {
+            _isLoading = true;
+            StateHasChanged();
+
+            var _pageNumber = (gridState.Page + 1);
+            var _sortBy = nameof(EmpleadoListItemDto.Id);
+            var _sortDescending = false;
+            var _sortDefinitions = gridState.SortDefinitions.FirstOrDefault();
+            if (_sortDefinitions != null)
+            {
+                _sortBy = _sortDefinitions.SortBy;
+                _sortDescending = _sortDefinitions.Descending;
+            }
+            var paginatedList = await _empleadosApi.GetEmpleadosAsync(_searchText,
+                _pageNumber,
+                gridState.PageSize,
+                _sortBy,
+                _sortDescending);
+
+            return new GridData<EmpleadoListItemDto>()
+            {
+                TotalItems = paginatedList.Data!.TotalCount,
+                Items = paginatedList.Data!.Results
+            };
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error al cargar Empleados: {ex.Message}", Severity.Error);
+            return new GridData<EmpleadoListItemDto>() { TotalItems = 0, Items = Enumerable.Empty<EmpleadoListItemDto>() };
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnSearch(string? text)
+    {
+        _searchText = text;
+        await RefreshData();
+    }
+
+    private async Task RefreshData()
+    {
+        if (_dataGridRef != null)
+        {
+            await _dataGridRef.ReloadServerData();
+        }
+    }
+
+    private async Task AddClick()
+    {
+        var parameters = new DialogParameters { ["Model"] = new EmpleadoEditDto() };
+        var dialog = await _dialogService.ShowAsync<EmpleadoForm>("Nuevo Empleado", parameters);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled && result.Data is EmpleadoEditDto model)
+        {
+            try
+            {
+                _isLoading = true;
+                await _empleadosApi.CreateEmpleadoAsync(model);
+                _snackbarService.Add("Empleado creado exitosamente.", Severity.Success);
+                await RefreshData();
+            }
+            catch (Exception ex)
+            {
+                _snackbarService.Add($"Error: {ex.Message}", Severity.Error);
+            }
+            finally
+            {
+                _isLoading = false;
+            }
+        }
+    }
+
+    private async Task DetailClick(int id)
+    {
+        try
+        {
+            _isLoading = true;
+            var response = await _empleadosApi.GetEmpleadoByIdAsync(id);
+            var empleado = response.Data;
+            
+            var parameters = new DialogParameters { ["Model"] = empleado };
+            var dialog = await _dialogService.ShowAsync<EmpleadoForm>("Editar Empleado", parameters);
+            var result = await dialog.Result;
+
+            if (result != null && !result.Canceled && result.Data is EmpleadoEditDto editModel)
+            {
+                await _empleadosApi.UpdateEmpleadoAsync(id, editModel);
+                _snackbarService.Add("Empleado actualizado exitosamente.", Severity.Success);
+                await RefreshData();
+            }
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task DeleteClick(EmpleadoListItemDto empleado)
+    {
+        bool? result = await _dialogService.ShowMessageBoxAsync(
+            "Confirmar Eliminación",
+            $"¿Está seguro de eliminar al empleado {empleado.Nombre} {empleado.Apellido}?",
+            yesText: "Eliminar", cancelText: "Cancelar");
+
+        if (result == true)
+        {
+            try
+            {
+                _isLoading = true;
+                await _empleadosApi.DeleteEmpleadoAsync(empleado.Id);
+                _snackbarService.Add("Empleado eliminado exitosamente.", Severity.Success);
+                await RefreshData();
+            }
+            catch (Exception ex)
+            {
+                _snackbarService.Add($"Error al eliminar: {ex.Message}", Severity.Error);
+            }
+            finally
+            {
+                _isLoading = false;
+            }
+        }
+    }
+}

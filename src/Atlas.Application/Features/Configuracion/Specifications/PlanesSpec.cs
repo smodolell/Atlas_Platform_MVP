@@ -3,7 +3,7 @@
 
 public class PlanesSpec : Specification<Plan>
 {
-    public PlanesSpec(string? searchText, int? periodicidadId)
+    public PlanesSpec(string? searchText, int? periodicidadId, int? servicioId)
     {
         if (!string.IsNullOrEmpty(searchText))
         {
@@ -12,10 +12,12 @@ public class PlanesSpec : Specification<Plan>
                 p.Descripcion.Contains(searchText));
         }
         if (periodicidadId != null)
-        {
             Query.Where(p => p.PeriodicidadId == periodicidadId.Value);
-        }
 
-        Query.Include(p => p.Periodicidad);
+        if (servicioId != null)
+            Query.Where(p => p.ServicioId == servicioId.Value);
+
+        Query.Include(p => p.Periodicidad)
+             .Include(p => p.Servicio);
     }
 }

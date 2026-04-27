@@ -7,6 +7,7 @@ public class SearchPlanesQuery : IQuery<Result<List<PlanSearchDto>>>
 {
     public string? SearchTerm { get; set; }
     public int MaxResults { get; set; } = 10;
+    public int? ServicioId { get; set; }
 }
 
 internal class SearchPlanesQueryHandler(IAtlasDbContext context) : IQueryHandler<SearchPlanesQuery, Result<List<PlanSearchDto>>>
@@ -15,12 +16,9 @@ internal class SearchPlanesQueryHandler(IAtlasDbContext context) : IQueryHandler
 
     public async Task<Result<List<PlanSearchDto>>> HandleAsync(SearchPlanesQuery request, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(request.SearchTerm) || request.SearchTerm.Length < 2)
-            return Result.Success(new List<PlanSearchDto>());
-
         var maxResults = Math.Min(request.MaxResults, 20);
 
-        var spec = new PlanesSpec(request.SearchTerm, null);
+        var spec = new PlanesSpec(request.SearchTerm, null, request.ServicioId);
         var result = await _context.Planes
             .WithSpecification(spec)
             .OrderBy(p => p.NomPlan)

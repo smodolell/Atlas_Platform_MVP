@@ -1,0 +1,128 @@
+@attribute [Route(PageRoute.EditServicioPage + "/{ServicioId:int}")]
+@attribute [AccessPoint(AppMenu.MenuConfiguracion, "Editar Servicio", AccessPointType.Page)]
+@using Atlas.Shared.Servicios
+@using Atlas.Admin.Pages.Configuracion.Servicios.Components
+@inject IServiciosApi _serviciosApi
+
+<PageHeader Title="@(_isNew ? "Nuevo Servicio" : _model?.NomServicio ?? "Editar Servicio")"
+            Icon="@AppMenu.MenuServiciosIcon">
+    <MudBreadcrumbs Items="_breadcrumbItems"></MudBreadcrumbs>
+</PageHeader>
+
+@if (_isLoading)
+{
+    <MudProgressCircular Indeterminate="true" Class="mt-5 mb-5 mx-auto d-flex" />
+}
+else
+{
+    @if (_isNew)
+    {
+        <MudPaper Elevation="2" Class="pa-4 mt-4">
+            <ServicioForm Model="_model!"
+                          IsSaving="_isSaving"
+                          OnValidSubmit="HandleSave"
+                          OnCancel="GoBack" />
+        </MudPaper>
+    }
+    else
+    {
+        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" Class="mt-4">
+            <MudTabPanel Text="Datos del Servicio" Icon="@Icons.Material.Filled.Info">
+                <MudPaper Elevation="0" Class="pa-4">
+                    <ServicioForm Model="_model!"
+                                  IsSaving="_isSaving"
+                                  OnValidSubmit="HandleSave"
+                                  OnCancel="GoBack" />
+                </MudPaper>
+            </MudTabPanel>
+            <MudTabPanel Text="Horarios" Icon="@Icons.Material.Filled.Schedule">
+                <MudPaper Elevation="0" Class="pa-4">
+                    <ServicioHorarioPanel ServicioId="ServicioId" />
+                </MudPaper>
+            </MudTabPanel>
+        </MudTabs>
+    }
+}
+
+@code {
+    [Parameter] public int ServicioId { get; set; }
+
+    private ServicioEditDto? _model;
+    private bool _isSaving;
+    private bool _isLoading = true;
+    private bool _isNew;
+
+    private List<BreadcrumbItem> _breadcrumbItems =
+    [
+        new BreadcrumbItem("Inicio", href: "/"),
+        new BreadcrumbItem("Servicios", href: PageRoute.ServiciosPage),
+        new BreadcrumbItem("Servicio", href: null, disabled: true)
+    ];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _isNew = ServicioId == 0;
+
+        if (_isNew)
+        {
+            _model = new ServicioEditDto { Activo = true };
+        }
+        else
+        {
+            try
+            {
+                var response = await _serviciosApi.GetServicioByIdAsync(ServicioId);
+                if (response.Success && response.Data != null)
+                    _model = response.Data;
+                else
+                    _snackbarService.Add("Servicio no encontrado.", Severity.Warning);
+            }
+            catch (Exception ex)
+            {
+                _snackbarService.Add($"Error al cargar: {ex.Message}", Severity.Error);
+            }
+        }
+
+        _isLoading = false;
+    }
+
+    private async Task HandleSave(ServicioEditDto model)
+    {
+        _isSaving = true;
+        try
+        {
+            if (_isNew)
+            {
+                var response = await _serviciosApi.CreateServicioAsync(model);
+                if (response.Success)
+                {
+                    _snackbarService.Add("Servicio creado correctamente.", Severity.Success);
+                    _navManager.NavigateTo(PageRoute.ServiciosPage);
+                }
+                else
+                    _snackbarService.Add("Error al crear el servicio.", Severity.Error);
+            }
+            else
+            {
+                var response = await _serviciosApi.UpdateServicioAsync(ServicioId, model);
+                if (response.Success)
+                {
+                    _snackbarService.Add("Servicio actualizado correctamente.", Severity.Success);
+                    _model = model;
+                }
+                else
+                    _snackbarService.Add("Error al actualizar el servicio.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error inesperado: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private void GoBack() => _navManager.NavigateTo(PageRoute.ServiciosPage);
+}

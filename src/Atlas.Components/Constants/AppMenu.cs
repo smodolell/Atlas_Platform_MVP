@@ -65,11 +65,12 @@ public static class AppMenu
     public const string MenuPlatform = "Platform";
     public const string MenuPlatformIcon = Icons.Material.Filled.AppSettingsAlt;
 
-    public const string MenuApoyo = "Apoyo";
-    public const string MenuApoyoIcon = Icons.Material.Filled.SupportAgent;
+    public const string MenuEmpleados = "Empleados";
+    public const string MenuEmpleadosIcon = Icons.Material.Filled.SupportAgent;
 
     public const string MenuDashboad = "Dashboard";
     public const string MenuDashboadIcon = Icons.Material.Filled.Dashboard;
 
-
+    public const string MenuServicios = "Servicios";
+    public const string MenuServiciosIcon = Icons.Material.Filled.MiscellaneousServices;
 }

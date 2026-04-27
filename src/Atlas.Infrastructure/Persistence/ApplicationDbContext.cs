@@ -37,6 +37,8 @@ public class ApplicationDbContext : IdentityDbContext<Usuario, Rol, int>, IAtlas
     public DbSet<PlanSesion> PlanesSesion => Set<PlanSesion>();
 
     public DbSet<Empleado> Empleados => Set<Empleado>();
+    public DbSet<Servicio> Servicios => Set<Servicio>();
+    public DbSet<ServicioHorario> ServicioHorarios => Set<ServicioHorario>();
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
     {
     }

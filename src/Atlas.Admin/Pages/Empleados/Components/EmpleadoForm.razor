@@ -1,0 +1,54 @@
+@using Atlas.Shared.Empleados
+<MudDialog>
+    <DialogContent>
+        <EditForm Model="@Model" OnValidSubmit="Submit" autocomplete="off">
+            <FluentValidator />
+            <MudTextField @bind-Value="Model.Nombre"
+                          For="@(() => Model.Nombre)"
+                          Label="Nombre" />
+
+            <MudTextField @bind-Value="Model.Apellido"
+                          For="@(() => Model.Apellido)"
+                          Label="Apellido" />
+            <div class="mt-4 d-flex justify-end">
+                <MudButton OnClick="Cancel" Class="mr-2">Cancelar</MudButton>
+                <MudButton Color="Color.Primary" Variant="Variant.Filled" ButtonType="ButtonType.Submit" Disabled="_isSubmitting">
+                    @if (_isSubmitting)
+                    {
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                        <MudText Class="ms-2">Guardando</MudText>
+                    }
+                    else
+                    {
+                        <MudText>Guardar</MudText>
+                    }
+                </MudButton>
+            </div>
+        </EditForm>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter]
+    public EmpleadoEditDto Model { get; set; } = new();
+
+    private bool _isSubmitting;
+
+    private async Task Submit()
+    {
+        _isSubmitting = true;
+        try
+        {
+            MudDialog.Close(DialogResult.Ok(Model));
+            await Task.CompletedTask;
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

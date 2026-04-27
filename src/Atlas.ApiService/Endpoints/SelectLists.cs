@@ -40,6 +40,19 @@ public class SelectLists : EndpointGroupBase
             .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
             .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
 
+        group.MapGet("empleados", GetEmpleadoSelectList)
+            .WithName("GetEmpleadoSelectList")
+            .WithSummary("Obtiene Empleados para select")
+            .Produces<ApiResponseDto<List<SelectListItemDto>>>(StatusCodes.Status200OK)
+            .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
+            .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
+
+        group.MapGet("servicios", GetServicioSelectList)
+            .WithName("GetServicioSelectList")
+            .WithSummary("Obtiene Servicios activos para select")
+            .Produces<ApiResponseDto<List<SelectListItemDto>>>(StatusCodes.Status200OK)
+            .Produces<ApiResponseDto>(StatusCodes.Status401Unauthorized)
+            .Produces<ApiResponseDto>(StatusCodes.Status500InternalServerError);
     }
 
 
@@ -82,6 +95,34 @@ public class SelectLists : EndpointGroupBase
         CancellationToken cancellationToken = default)
     {
         var result = await queryMediator.QueryAsync(new GetTipoPagoSelectListQuery(), cancellationToken);
+        return Result.Success(result.Value).ToCustomMinimalApiResult();
+    }
+
+    public async Task<IResult> GetEmpleadoSelectList(
+        [FromServices] IQueryMediator queryMediator,
+        [FromQuery] string? searchTerm = null,
+        [FromQuery] int? maxResults = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await queryMediator.QueryAsync(new GetEmpleadoSelectListQuery
+        {
+            SearchTerm = searchTerm,
+            MaxResults = maxResults
+        }, cancellationToken);
+        return Result.Success(result.Value).ToCustomMinimalApiResult();
+    }
+
+    public async Task<IResult> GetServicioSelectList(
+        [FromServices] IQueryMediator queryMediator,
+        [FromQuery] string? searchTerm = null,
+        [FromQuery] int? maxResults = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await queryMediator.QueryAsync(new GetServicioSelectListQuery
+        {
+            SearchTerm = searchTerm,
+            MaxResults = maxResults
+        }, cancellationToken);
         return Result.Success(result.Value).ToCustomMinimalApiResult();
     }
 

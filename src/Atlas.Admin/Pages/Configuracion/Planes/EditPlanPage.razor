@@ -6,29 +6,38 @@
 @inject IConfiguracionApi _configuracionApi
 
 
-<PageHeader Title="Editar Producto" Icon="@Icons.Material.Filled.Edit">
+<PageHeader Title="Editar Plan" Icon="@Icons.Material.Filled.Edit">
     <MudBreadcrumbs Items="_breadcrumbItems"></MudBreadcrumbs>
 
 </PageHeader>
 
-<MudPaper Elevation="2" Class="pa-4 mt-4">
-    @if (_isLoading)
-    {
-        <MudProgressCircular Indeterminate="true" Class="mt-5 mb-5 mx-auto" />
-    }
-    else if (_model == null)
-    {
-        <MudAlert Severity="Severity.Error">Plan no encontrado</MudAlert>
-        <MudButton Variant="Variant.Outlined" Class="mt-3" OnClick="GoBack">Volver</MudButton>
-    }
-    else
-    {
-        <PlanForm Model="_model"
-                      IsSaving="_isSaving"
-                      OnValidSubmit="HandleSave"
-                      OnCancel="GoBack" />
-    }
-</MudPaper>
+@if (_isLoading)
+{
+    <MudProgressCircular Indeterminate="true" Class="mt-5 mb-5 mx-auto d-flex" />
+}
+else if (_model == null)
+{
+    <MudAlert Severity="Severity.Error">Plan no encontrado</MudAlert>
+    <MudButton Variant="Variant.Outlined" Class="mt-3" OnClick="GoBack">Volver</MudButton>
+}
+else
+{
+    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" Class="mt-4">
+        <MudTabPanel Text="Datos del Plan" Icon="@Icons.Material.Filled.Info">
+            <MudPaper Elevation="0" Class="pa-4">
+                <PlanForm Model="_model"
+                          IsSaving="_isSaving"
+                          OnValidSubmit="HandleSave"
+                          OnCancel="GoBack" />
+            </MudPaper>
+        </MudTabPanel>
+        <MudTabPanel Text="Horarios" Icon="@Icons.Material.Filled.Schedule">
+            <MudPaper Elevation="0" Class="pa-4">
+                <PlanHorarioList PlanId="PlanId" />
+            </MudPaper>
+        </MudTabPanel>
+    </MudTabs>
+}
 
 @code {
     [Parameter]
@@ -38,7 +47,7 @@
     private bool _isSaving;
     private bool _isLoading = true;
     private readonly List<BreadcrumbItem> _breadcrumbItems = new()
-{
+    {
         new BreadcrumbItem("Inicio", href: "/"),
         new BreadcrumbItem("Planes", href: PageRoute.PlanesPage),
         new BreadcrumbItem("Editar Plan", href: null, disabled: true)

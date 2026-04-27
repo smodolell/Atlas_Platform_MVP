@@ -19,6 +19,8 @@ public class PlanConfiguration : IEntityTypeConfiguration<Plan>
             .IsRequired()
             .ValueGeneratedOnAdd()
             .UseIdentityColumn(1, 1);
+        builder.Property(p => p.ServicioId)
+         .IsRequired();
 
         builder.Property(p => p.PeriodicidadId)
             .IsRequired();
@@ -26,12 +28,10 @@ public class PlanConfiguration : IEntityTypeConfiguration<Plan>
         builder.Property(p => p.NomPlan)
             .IsRequired()
             .HasMaxLength(200)
-            .HasColumnName("NomPlan")
             .HasColumnType("nvarchar(200)");
 
         builder.Property(p => p.Descripcion)
             .HasMaxLength(1000)
-            .HasColumnName("Descripcion")
             .HasColumnType("nvarchar(1000)");
 
         builder.Property(p => p.Precio)
@@ -46,6 +46,11 @@ public class PlanConfiguration : IEntityTypeConfiguration<Plan>
         builder.Property(p => p.Activo)
             .IsRequired()
             .HasDefaultValue(true);
+
+        builder.HasOne(p => p.Servicio)
+            .WithMany(s => s.Planes)
+            .HasForeignKey(p => p.ServicioId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // Configurar relación con Periodicidad
         builder.HasOne(p => p.Periodicidad)
@@ -64,6 +69,9 @@ public class PlanConfiguration : IEntityTypeConfiguration<Plan>
             .IsUnique()
             .HasDatabaseName("IX_Planes_NomPlan");
 
+        builder.HasIndex(p => p.ServicioId) 
+            .HasDatabaseName("IX_Planes_ServicioId");
+
         builder.HasIndex(p => p.PeriodicidadId)
             .HasDatabaseName("IX_Planes_PeriodicidadId");
 
@@ -72,5 +80,8 @@ public class PlanConfiguration : IEntityTypeConfiguration<Plan>
 
         builder.HasIndex(p => new { p.Activo, p.NomPlan })
             .HasDatabaseName("IX_Planes_Activo_NomPlan");
+
+        builder.HasIndex(p => new { p.ServicioId, p.Activo })
+            .HasDatabaseName("IX_Planes_ServicioId_Activo");
     }
 }

@@ -75,12 +75,14 @@ public class AccessPointAttribute : Attribute
                 return AppMenu.MenuSociosIcon;
             case AppMenu.MenuPlatform:
                 return AppMenu.MenuPlatformIcon;
-            case AppMenu.MenuApoyo:
-                return AppMenu.MenuApoyoIcon;
+            case AppMenu.MenuEmpleados:
+                return AppMenu.MenuEmpleadosIcon;
              case AppMenu.MenuDashboad:
                 return AppMenu.MenuDashboadIcon;
             case AppMenu.MenuGestion:
                 return AppMenu.MenuGestionIcon;
+            case AppMenu.MenuAsistencias:
+                return AppMenu.MenuAsistenciasIcon;
             default: return "";
         }
     }

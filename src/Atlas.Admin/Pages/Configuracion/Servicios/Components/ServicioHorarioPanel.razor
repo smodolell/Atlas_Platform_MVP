@@ -1,0 +1,382 @@
+@using Atlas.Shared.Servicios
+@inject IServiciosApi _serviciosApi
+@inject ISelectListsApi _selectListsApi
+
+<MudGrid Spacing="4">
+
+    @* Formulario inline *@
+    <MudItem xs="12" md="4">
+        <MudPaper Outlined="true" Class="pa-4">
+            <MudText Typo="Typo.subtitle1" Class="mb-3">
+                @(_editando ? "Editar horario" : "Nuevo horario")
+            </MudText>
+
+            <EditForm EditContext="_editContext" OnValidSubmit="GuardarHorario">
+                <FluentValidator />
+
+                <MudSelect T="int"
+                           Label="Instructor"
+                           @bind-Value="_form.EmpleadoId"
+                           For="@(() => _form.EmpleadoId)"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.Dense"
+                           Class="mb-3">
+                    <MudSelectItem T="int" Value="0">[Seleccione]</MudSelectItem>
+                    @if (_listEmpleados != null)
+                    {
+                        @foreach (var e in _listEmpleados)
+                        {
+                            <MudSelectItem T="int" Value="@int.Parse(e.Value)">@e.Text</MudSelectItem>
+                        }
+                    }
+                </MudSelect>
+
+                @if (_editando)
+                {
+                    <MudSelect T="DayOfWeek"
+                               Label="Día de la semana"
+                               @bind-Value="_form.DiaSemana"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Class="mb-3">
+                        @foreach (var dia in _diasSemana)
+                        {
+                            <MudSelectItem T="DayOfWeek" Value="@dia.Key">@dia.Value</MudSelectItem>
+                        }
+                    </MudSelect>
+                }
+                else
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-1 d-block">Días de la semana</MudText>
+                    <MudChipSet T="DayOfWeek"
+                                CheckMark
+                                SelectionMode="SelectionMode.MultiSelection"
+                                SelectedValues="_diasSeleccionados"
+                                SelectedValuesChanged="OnDiasChanged"
+                                Class="mb-1 flex-wrap">
+                        @foreach (var dia in _diasSemana)
+                        {
+                            <MudChip T="DayOfWeek"
+                                     Value="@dia.Key"
+                                     Variant="Variant.Outlined"
+                                     Color="Color.Primary"
+                                     SelectedColor="Color.Primary"
+                                     Size="Size.Small">
+                                @dia.Value[..3]
+                            </MudChip>
+                        }
+                    </MudChipSet>
+                    @if (_mostrarErrorDias)
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Error" Class="mb-2 d-block">
+                            Debe seleccionar al menos un día.
+                        </MudText>
+                    }
+                    else
+                    {
+                        <div class="mb-2"></div>
+                    }
+                }
+
+                <MudTimePicker Label="Hora inicio"
+                               Time="_horaInicio"
+                               TimeChanged="OnHoraInicioChanged"
+                               AmPm="false"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Class="mb-3" />
+
+                <MudTimePicker Label="Hora fin"
+                               Time="_horaFin"
+                               TimeChanged="OnHoraFinChanged"
+                               AmPm="false"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Class="mb-3" />
+
+                <MudSwitch @bind-Value="_form.Activo" Label="Activo" Color="Color.Primary" Class="mb-3" />
+
+                <MudStack Row="true" Spacing="2">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               ButtonType="ButtonType.Submit"
+                               Disabled="_isSaving"
+                               FullWidth="true">
+                        @if (_isSaving)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="ms-n1" />
+                            <MudText Class="ms-2">Guardando</MudText>
+                        }
+                        else
+                        {
+                            <MudText>@(_editando ? "Actualizar" : "Agregar")</MudText>
+                        }
+                    </MudButton>
+                    @if (_editando)
+                    {
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Secondary"
+                                   OnClick="CancelarEdicion"
+                                   FullWidth="true">
+                            Cancelar
+                        </MudButton>
+                    }
+                </MudStack>
+            </EditForm>
+        </MudPaper>
+    </MudItem>
+
+    @* Lista de horarios *@
+    <MudItem xs="12" md="8">
+        @if (_isLoading)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+        }
+        else if (_horarios == null || _horarios.Count == 0)
+        {
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                No hay horarios configurados. Agrega uno desde el formulario.
+            </MudAlert>
+        }
+        else
+        {
+            <MudTable Items="_horarios"
+                      Dense="true"
+                      Bordered="true"
+                      Striped="true"
+                      Outlined="true"
+                      SelectedItem="_seleccionado"
+                      SelectedItemChanged="OnSeleccionChanged"
+                      T="ServicioHorarioListItemDto"
+                      RowClass="cursor-pointer"
+                      Hover="true">
+                <HeaderContent>
+                    <MudTh>Día</MudTh>
+                    <MudTh>Instructor</MudTh>
+                    <MudTh>Inicio</MudTh>
+                    <MudTh>Fin</MudTh>
+                    <MudTh>Estado</MudTh>
+                    <MudTh Style="text-align:right">Acciones</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@GetNombreDia(context.DiaSemana)</MudTd>
+                    <MudTd>@context.NomEmpleado</MudTd>
+                    <MudTd>@context.HoraInicio.ToString("HH:mm")</MudTd>
+                    <MudTd>@context.HoraFin.ToString("HH:mm")</MudTd>
+                    <MudTd>
+                        <MudChip T="string"
+                                 Color="@(context.Activo ? Color.Success : Color.Error)"
+                                 Size="Size.Small"
+                                 Variant="Variant.Filled">
+                            @(context.Activo ? "Activo" : "Inactivo")
+                        </MudChip>
+                    </MudTd>
+                    <MudTd Style="text-align:right">
+                        <MudTooltip Text="Eliminar">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                           Color="Color.Error"
+                                           Size="Size.Small"
+                                           OnClick="@(() => EliminarHorario(context))" />
+                        </MudTooltip>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+    </MudItem>
+
+</MudGrid>
+
+@code {
+    [Parameter, EditorRequired] public int ServicioId { get; set; }
+
+    private List<ServicioHorarioListItemDto>? _horarios;
+    private List<SelectListItemDto>? _listEmpleados;
+    private ServicioHorarioListItemDto? _seleccionado;
+
+    private ServicioHorarioEditDto _form = new();
+    private EditContext _editContext = null!;
+    private bool _editando;
+    private bool _isSaving;
+    private bool _isLoading;
+    private bool _mostrarErrorDias;
+
+    private TimeSpan? _horaInicio;
+    private TimeSpan? _horaFin;
+    private IReadOnlyCollection<DayOfWeek> _diasSeleccionados = new HashSet<DayOfWeek>();
+
+    private static readonly Dictionary<DayOfWeek, string> _diasSemana = new()
+    {
+        { DayOfWeek.Monday,    "Lunes" },
+        { DayOfWeek.Tuesday,   "Martes" },
+        { DayOfWeek.Wednesday, "Miércoles" },
+        { DayOfWeek.Thursday,  "Jueves" },
+        { DayOfWeek.Friday,    "Viernes" },
+        { DayOfWeek.Saturday,  "Sábado" },
+        { DayOfWeek.Sunday,    "Domingo" }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        ResetForm();
+        await Task.WhenAll(CargarEmpleados(), CargarHorarios());
+    }
+
+    private async Task CargarEmpleados()
+    {
+        var r = await _selectListsApi.GetEmpleadoSelectListAsync();
+        _listEmpleados = r.Data;
+    }
+
+    private async Task CargarHorarios()
+    {
+        _isLoading = true;
+        try
+        {
+            var r = await _serviciosApi.GetHorariosAsync(ServicioId);
+            _horarios = r.Data ?? [];
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error al cargar horarios: {ex.Message}", Severity.Error);
+            _horarios = [];
+        }
+        finally { _isLoading = false; }
+    }
+
+    private void OnDiasChanged(IReadOnlyCollection<DayOfWeek> dias)
+    {
+        _diasSeleccionados = dias;
+        if (dias.Count > 0)
+            _mostrarErrorDias = false;
+    }
+
+    private void OnSeleccionChanged(ServicioHorarioListItemDto item)
+    {
+        _seleccionado = item;
+        _editando = true;
+
+        _form = new ServicioHorarioEditDto
+        {
+            Id = item.Id,
+            ServicioId = item.ServicioId,
+            EmpleadoId = item.EmpleadoId,
+            DiaSemana = item.DiaSemana,
+            HoraInicio = item.HoraInicio,
+            HoraFin = item.HoraFin,
+            Activo = item.Activo
+        };
+
+        _horaInicio = item.HoraInicio.ToTimeSpan();
+        _horaFin = item.HoraFin.ToTimeSpan();
+        _editContext = new EditContext(_form);
+        StateHasChanged();
+    }
+
+    private async Task GuardarHorario()
+    {
+        _isSaving = true;
+        try
+        {
+            if (_editando)
+            {
+                var r = await _serviciosApi.UpdateHorarioAsync(_form.Id, _form);
+                if (r.Success)
+                    _snackbarService.Add("Horario actualizado.", Severity.Success);
+                else
+                    _snackbarService.Add("Error al actualizar.", Severity.Error);
+            }
+            else
+            {
+                if (_diasSeleccionados.Count == 0)
+                {
+                    _mostrarErrorDias = true;
+                    return;
+                }
+
+                var errores = 0;
+                foreach (var dia in _diasSeleccionados.OrderBy(d => (int)d))
+                {
+                    var dto = new ServicioHorarioEditDto
+                    {
+                        ServicioId = ServicioId,
+                        EmpleadoId = _form.EmpleadoId,
+                        DiaSemana = dia,
+                        HoraInicio = _form.HoraInicio,
+                        HoraFin = _form.HoraFin,
+                        Activo = _form.Activo
+                    };
+
+                    var r = await _serviciosApi.CreateHorarioAsync(ServicioId, dto);
+                    if (!r.Success) errores++;
+                }
+
+                if (errores == 0)
+                    _snackbarService.Add($"{_diasSeleccionados.Count} horario(s) agregado(s).", Severity.Success);
+                else
+                    _snackbarService.Add($"Se agregaron con {errores} error(es).", Severity.Warning);
+            }
+
+            ResetForm();
+            await CargarHorarios();
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error: {ex.Message}", Severity.Error);
+        }
+        finally { _isSaving = false; }
+    }
+
+    private async Task EliminarHorario(ServicioHorarioListItemDto item)
+    {
+        bool? confirm = await _dialogService.ShowMessageBoxAsync(
+            "Confirmar eliminación",
+            $"¿Eliminar el horario del {GetNombreDia(item.DiaSemana)} ({item.HoraInicio:HH\\:mm} - {item.HoraFin:HH\\:mm})?",
+            yesText: "Eliminar", cancelText: "Cancelar",
+            options: new DialogOptions { MaxWidth = MaxWidth.ExtraSmall });
+
+        if (confirm == true)
+        {
+            try
+            {
+                await _serviciosApi.DeleteHorarioAsync(item.Id);
+                _snackbarService.Add("Horario eliminado.", Severity.Success);
+                if (_seleccionado?.Id == item.Id)
+                    ResetForm();
+                await CargarHorarios();
+            }
+            catch (Exception ex)
+            {
+                _snackbarService.Add($"Error al eliminar: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private void CancelarEdicion() => ResetForm();
+
+    private void ResetForm()
+    {
+        _editando = false;
+        _seleccionado = null;
+        _mostrarErrorDias = false;
+        _diasSeleccionados = new HashSet<DayOfWeek>();
+        _form = new ServicioHorarioEditDto { ServicioId = ServicioId, Activo = true };
+        _horaInicio = null;
+        _horaFin = null;
+        _editContext = new EditContext(_form);
+    }
+
+    private void OnHoraInicioChanged(TimeSpan? v)
+    {
+        _horaInicio = v;
+        _form.HoraInicio = v.HasValue ? TimeOnly.FromTimeSpan(v.Value) : new TimeOnly(0, 0);
+    }
+
+    private void OnHoraFinChanged(TimeSpan? v)
+    {
+        _horaFin = v;
+        _form.HoraFin = v.HasValue ? TimeOnly.FromTimeSpan(v.Value) : new TimeOnly(0, 0);
+    }
+
+    private string GetNombreDia(DayOfWeek dia) =>
+        _diasSemana.TryGetValue(dia, out var nombre) ? nombre : dia.ToString();
+}

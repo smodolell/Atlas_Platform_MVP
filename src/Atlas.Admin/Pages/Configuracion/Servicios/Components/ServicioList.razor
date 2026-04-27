@@ -1,0 +1,161 @@
+@using Atlas.Shared.Servicios
+@inject IServiciosApi _serviciosApi
+
+<MudDataGrid T="ServicioListItemDto"
+             Outlined="true"
+             Dense="true"
+             Bordered="true"
+             ServerData="GetTableData"
+             FixedHeader="true"
+             SortMode="SortMode.Single"
+             @ref="_dataGridRef"
+             Loading="_isLoading"
+             Striped="true">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Listado de Servicios</MudText>
+        <MudSpacer />
+        <MudStack Row="true" AlignItems="AlignItems.End" Spacing="1">
+            <MudTextField T="string"
+                          ValueChanged="@(s => OnSearch(s))"
+                          Placeholder="Buscar por nombre..."
+                          Adornment="Adornment.Start"
+                          Clearable="true"
+                          Class="flex-grow-0"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          IconSize="Size.Small" />
+        </MudStack>
+        <MudStack Row="true" AlignItems="AlignItems.Start" Spacing="2" Class="ml-4">
+            <MudTooltip Text="Actualizar">
+                <MudIconButton Icon="@Icons.Material.Outlined.Refresh"
+                               Size="Size.Small"
+                               Color="Color.Info"
+                               OnClick="RefreshData"
+                               Disabled="_isLoading" />
+            </MudTooltip>
+            <MudTooltip Text="Nuevo Servicio">
+                <MudButton Variant="Variant.Filled"
+                           Size="Size.Small"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Outlined.Add"
+                           OnClick="AddClick"
+                           Disabled="_isLoading">
+                    Nuevo Servicio
+                </MudButton>
+            </MudTooltip>
+        </MudStack>
+    </ToolBarContent>
+    <Columns>
+        <PropertyColumn Property="x => x.NomServicio" Title="Nombre" />
+        <PropertyColumn Property="x => x.Descripcion" Title="Descripción" />
+        <TemplateColumn Title="Estado" SortBy="x => x.Activo">
+            <CellTemplate>
+                <MudChip T="string"
+                         Color="@(context.Item.Activo ? Color.Success : Color.Error)"
+                         Size="Size.Small"
+                         Variant="Variant.Filled">
+                    @(context.Item.Activo ? "Activo" : "Inactivo")
+                </MudChip>
+            </CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn Title="Acciones" CellClass="d-flex justify-end" StickyRight="true">
+            <CellTemplate>
+                <MudStack Row="true" Justify="Justify.FlexEnd">
+                    <MudTooltip Text="Editar">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                       Color="Color.Primary"
+                                       Size="Size.Small"
+                                       OnClick="@(() => EditClick(context.Item.Id))" />
+                    </MudTooltip>
+                    <MudTooltip Text="Eliminar">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                       Color="Color.Error"
+                                       Size="Size.Small"
+                                       OnClick="@(() => DeleteClick(context.Item))" />
+                    </MudTooltip>
+                </MudStack>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <NoRecordsContent><MudText>No se encontraron servicios.</MudText></NoRecordsContent>
+    <LoadingContent><MudText>Cargando...</MudText></LoadingContent>
+</MudDataGrid>
+
+@code {
+    private MudDataGrid<ServicioListItemDto> _dataGridRef = null!;
+    private bool _isLoading;
+    private string? _searchText;
+
+    private async Task<GridData<ServicioListItemDto>> GetTableData(GridState<ServicioListItemDto> state, CancellationToken ct)
+    {
+        try
+        {
+            _isLoading = true;
+            StateHasChanged();
+
+            var sortCol = state.SortDefinitions.FirstOrDefault();
+            var response = await _serviciosApi.GetServiciosAsync(
+                _searchText, state.Page + 1, state.PageSize,
+                sortCol?.SortBy, sortCol?.Descending ?? false);
+
+            return new GridData<ServicioListItemDto>
+            {
+                TotalItems = response.Data!.TotalCount,
+                Items = response.Data.Results
+            };
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error al cargar servicios: {ex.Message}", Severity.Error);
+            return new GridData<ServicioListItemDto> { TotalItems = 0, Items = [] };
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnSearch(string? text)
+    {
+        _searchText = text;
+        await RefreshData();
+    }
+
+    private async Task RefreshData()
+    {
+        if (_dataGridRef != null)
+            await _dataGridRef.ReloadServerData();
+    }
+
+    private void AddClick() => _navManager.NavigateTo(PageRoute.EditServicioPage + "/0");
+
+    private void EditClick(int id) => _navManager.NavigateTo($"{PageRoute.EditServicioPage}/{id}");
+
+    private async Task DeleteClick(ServicioListItemDto item)
+    {
+        bool? confirm = await _dialogService.ShowMessageBoxAsync(
+            "Confirmar eliminación",
+            $"¿Deseas eliminar el servicio \"{item.NomServicio}\"?",
+            yesText: "Eliminar", cancelText: "Cancelar",
+            options: new DialogOptions { MaxWidth = MaxWidth.ExtraSmall });
+
+        if (confirm == true)
+        {
+            try
+            {
+                _isLoading = true;
+                await _serviciosApi.DeleteServicioAsync(item.Id);
+                _snackbarService.Add("Servicio eliminado correctamente.", Severity.Success);
+                await RefreshData();
+            }
+            catch (Exception ex)
+            {
+                _snackbarService.Add($"Error al eliminar: {ex.Message}", Severity.Error);
+            }
+            finally
+            {
+                _isLoading = false;
+            }
+        }
+    }
+}

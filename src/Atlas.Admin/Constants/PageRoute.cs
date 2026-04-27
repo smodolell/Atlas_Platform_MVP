@@ -27,5 +27,8 @@ internal static class PageRoute
 
     public const string AsistenciasPage = Prefix + "asistencias";
     public const string RegistrarAsistenciaPage = Prefix + "registrar_asistencia";
+    public const string EmpleadosPage = Prefix + "empleados";
 
+    public const string ServiciosPage = Prefix + "servicios";
+    public const string EditServicioPage = Prefix + "edit_servicio";
 }

@@ -17,8 +17,8 @@ public interface IAtlasDbContext
     DbSet<RolAccessPoint> SYS_RolAccessPoint { get; }
     DbSet<Menu> SYS_Menu { get; }
     DbSet<Empleado> Empleados { get; }
-
-
+    DbSet<Servicio> Servicios { get; }
+    DbSet<ServicioHorario> ServicioHorarios { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

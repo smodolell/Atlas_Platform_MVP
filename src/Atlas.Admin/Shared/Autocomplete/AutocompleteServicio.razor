@@ -1,0 +1,95 @@
+@using Atlas.Shared.Servicios
+@using Atlas.Client.Services
+@using Atlas.Shared.Common
+@inject IServiciosApi ServiciosApi
+
+<MudAutocomplete T="ServicioSearchDto"
+                 Label="@Label"
+                 Value="SelectedServicio"
+                 ValueChanged="OnSelectedValueChanged"
+                 SearchFunc="@SearchServicios"
+                 ToStringFunc="@GetServicioText"
+                 Variant="Variant.Outlined"
+                 Margin="Margin.Dense"
+                 DebounceInterval="300"
+                 MinCharacters="0"
+                 MaxItems="10"
+                 ResetValueOnEmptyText="true"
+                 Required="@Required"
+                 RequiredError="@RequiredError"
+                 Disabled="@Disabled">
+    <ItemTemplate>
+        <MudText>@context.NomServicio</MudText>
+        @if (!string.IsNullOrEmpty(context.Descripcion))
+        {
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">@context.Descripcion</MudText>
+        }
+    </ItemTemplate>
+    <NoItemsTemplate>
+        <MudText Class="pa-3">No se encontraron servicios</MudText>
+    </NoItemsTemplate>
+</MudAutocomplete>
+
+@code {
+    [Parameter]
+    public string Label { get; set; } = "Buscar Servicio";
+
+    [Parameter]
+    public ServicioSearchDto? SelectedServicio { get; set; }
+
+    [Parameter]
+    public EventCallback<ServicioSearchDto?> SelectedServicioChanged { get; set; }
+
+    [Parameter]
+    public bool Required { get; set; } = false;
+
+    [Parameter]
+    public string RequiredError { get; set; } = "Debe seleccionar un servicio";
+
+    [Parameter]
+    public bool Disabled { get; set; } = false;
+
+    [Parameter]
+    public int MaxResults { get; set; } = 10;
+
+    [Parameter]
+    public EventCallback<ServicioSearchDto?> OnServicioSelected { get; set; }
+
+    private CancellationTokenSource? _cancellationTokenSource;
+
+    private async Task<IEnumerable<ServicioSearchDto>> SearchServicios(string value, CancellationToken token)
+    {
+        try
+        {
+            _cancellationTokenSource?.Cancel();
+            _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(token);
+
+            var response = await ServiciosApi.SearchServiciosAsync(value, MaxResults, _cancellationTokenSource.Token);
+
+            if (response.Success && response.Data != null)
+                return response.Data;
+
+            return Array.Empty<ServicioSearchDto>();
+        }
+        catch (OperationCanceledException)
+        {
+            return Array.Empty<ServicioSearchDto>();
+        }
+        catch (Exception ex)
+        {
+            _snackbarService.Add($"Error al buscar servicios: {ex.Message}", Severity.Error);
+            return Array.Empty<ServicioSearchDto>();
+        }
+    }
+
+    private string GetServicioText(ServicioSearchDto? servicio) => servicio?.NomServicio ?? string.Empty;
+
+    private async Task OnSelectedValueChanged(ServicioSearchDto? value)
+    {
+        SelectedServicio = value;
+        await SelectedServicioChanged.InvokeAsync(value);
+
+        if (value != null && OnServicioSelected.HasDelegate)
+            await OnServicioSelected.InvokeAsync(value);
+    }
+}
